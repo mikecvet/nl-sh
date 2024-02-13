@@ -51,6 +51,9 @@ Here's a video:
 
 https://github.com/mikecvet/nl-sh/assets/275631/6ab96b9e-6e6d-411b-ab59-2cd3986208fa
 
+![nl-sh](https://github.com/mikecvet/nl-sh/assets/275631/1f45f93a-a5e3-45ad-a4af-e3c92aa90cbb)
+
+
 ## What is this?
 
 - **POSIX Command Execution:** Run regular shell commands
