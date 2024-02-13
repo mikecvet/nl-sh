@@ -9,7 +9,7 @@ pub use crate::model::*;
 /// Some POSIX commands have verb-y characteristics, and for these, we'll let the LLM determine
 /// whether the user intent is to run a specfic command, or whether the request is something
 /// akin to "diff these two files" or "sort and print the text in a, b, and c"
-static COMMAND_EXCEPTIONS: &[&str] = &["alias", "cat", "diff", "expand", "kill", "link", "read", "sort", "split", "strip", "touch", "type", "what", "who"];
+static COMMAND_EXCEPTIONS: &[&str] = &["alias", "cat", "diff", "expand", "find", "kill", "link", "log", "read", "sort", "split", "strip", "touch", "type", "what", "which", "who"];
 
 /**
  * Determine whether the input from the prompt is a likely system command. This is
@@ -23,9 +23,9 @@ static COMMAND_EXCEPTIONS: &[&str] = &["alias", "cat", "diff", "expand", "kill",
 fn 
 likely_system_command (context: &Context, command: &String) -> bool {
   let parts: Vec<&str> = command.split_whitespace().collect();
-  let cmd = parts.get(0).unwrap_or(&""); // Extract the just command without arguments
+  let cmd = parts.get(0).unwrap_or(&"").to_lowercase(); // Extract the just command without arguments
 
-  if COMMAND_EXCEPTIONS.contains(cmd) {
+  if COMMAND_EXCEPTIONS.contains(&cmd.as_str()) {
     // The user string contains a verb-y command, let the LLM sort it out
     return false
   } else {
@@ -49,7 +49,7 @@ maybe_update_context (cmd: &str, context: &mut Context) -> Result<(), Box<dyn st
   let mut parts: Vec<&str> = cmd.split_whitespace().collect();
   let cmd = parts.remove(0);
 
-  if cmd.to_owned().eq("cd") {
+  if cmd.to_owned().to_lowercase().eq("cd") {
     // If this was a change-directory command, set the current environment to
     // cd's subsequent argument and update `context.pwd`
     env::set_current_dir(parts.remove(0))?;

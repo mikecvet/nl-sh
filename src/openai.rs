@@ -6,7 +6,6 @@ use openai_api_rs::v1::error::APIError;
 pub fn
 issue_gpt4_request (client: &OpenAIClient, prompt: &str) -> Result<ChatCompletionResponse, APIError>
 {
-  //println!("issue request with prompt: [{}]", prompt);
   let req = ChatCompletionRequest::new(
     GPT4.to_string(),
     vec![chat_completion::ChatCompletionMessage {
