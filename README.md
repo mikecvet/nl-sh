@@ -6,6 +6,8 @@
 
 The point of this shell is to elimiate the tedious tasks of googling Stack Overflow or grepping man pages to figure out the right combination of commands, pipes and flags to complete complex operations from the command line. This provides a human-centered CLI experience, for those who spend time on *NIX variants but are poorly-versed in the entire command vocabulary.
 
+This is discussed a little further [here](https://mikecvet.medium.com/nl-sh-the-natural-language-shell-ad2ddc2e13a7)
+
 `nl-sh` is best demonstrated with some examples:
 
 ```
