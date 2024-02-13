@@ -47,9 +47,7 @@ The point of this shell is to elimiate the tedious tasks of googling Stack Overf
    1295     1  10.0 /System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app/Contents/MacOS/Safari
 ```
 
-Here's a video:
-
-https://github.com/mikecvet/nl-sh/assets/275631/6ab96b9e-6e6d-411b-ab59-2cd3986208fa
+Here's a video demonstration:
 
 ![nl-sh](https://github.com/mikecvet/nl-sh/assets/275631/1f45f93a-a5e3-45ad-a4af-e3c92aa90cbb)
 
