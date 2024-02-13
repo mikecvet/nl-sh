@@ -2,7 +2,9 @@
 
 ## Introduction
 
-`nl-sh` stands for Natural Language Shell, a novel approach to interacting with POSIX systems through natural language processing. This project aims to bridge the gap between traditional shell command execution and natural language interpretation, providing a user-friendly interface for executing complex shell commands using simple English prompts. Written in Rust, `nl-sh` emphasizes performance, safety, and compatibility with existing shell environments. Primarily a proof-of-concept, `nl-sh` makes working in terminals more accessible and intuitive, as the shell accepts both traditional POSIX commands as well as human-language instructions for system operations.
+`nl-sh` stands for Natural Language Shell, a novel approach to interacting with POSIX systems through natural language processing. This project aims to bridge the gap between traditional shell command execution and natural language interpretation, providing a user-friendly interface for executing complex shell commands using simple English prompts. This is a proof-of-concept. `nl-sh` makes working in terminals more accessible and intuitive, as the shell accepts both traditional POSIX commands as well as human-language instructions for system operations; the best command sequence satisfying that human prompt is provided back to the user for verification before execution.
+
+The point of this shell is to elimiate the tedious tasks of googling Stack Overflow or grepping man pages to figure out the right combination of commands, pipes and flags to complete complex operations from the command line. This provides a human-centered CLI experience, for those who spend time on *NIX variants but are poorly-versed in the entire command vocabulary.
 
 `nl-sh` is best demonstrated with some examples:
 
@@ -49,10 +51,12 @@ Here's a video:
 
 https://github.com/mikecvet/nl-sh/assets/275631/6ab96b9e-6e6d-411b-ab59-2cd3986208fa
 
-
-
 ## What is this?
 
 - **POSIX Command Execution:** Run regular shell commands
 - **Natural Language Processing:** Interprets natural language prompts to generate and then conditionally execute complex compositions of system commands and arguments
 - **Rust-Based:** Written in Rust, leveraging some excellent crates for UI prompts and OpenAI APIs.
+
+## How does this work?
+
+`nl-sh` acts like a (minimal) shell by wrapping the underlying shell with a prompt which accepts and executes text inputs from the user. Inputs which seem like actual POSIX commands are directly executed; otherwise the input is directed to a model (currently just GPT4) to interpret the input and provide a command sequence satisfying the request, customized for the local system powering the shell. This shell collects some environmental data such as kernal and OS version details to try and generate the most accurate command-line sequence for the given POSIX variant.
