@@ -45,6 +45,12 @@
    1295     1  10.0 /System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app/Contents/MacOS/Safari
 ```
 
+Here's a video:
+
+https://github.com/mikecvet/nl-sh/assets/275631/6ab96b9e-6e6d-411b-ab59-2cd3986208fa
+
+
+
 ## What is this?
 
 - **POSIX Command Execution:** Run regular shell commands
