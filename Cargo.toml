@@ -3,9 +3,9 @@ name = "nl-sh"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+clap = { version = "4.2.7", features = ["derive"] }
 inquire = "0.6.2"
+llama_cpp_rs = "0.3.0"
 openai-api-rs = "4.0.6"
 regex = "1"

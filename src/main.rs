@@ -1,20 +1,18 @@
-use openai_api_rs::v1::api::Client as OpenAIClient;
-use openai_api_rs::v1::error::APIError;
+use clap::{arg, Command as CommandArg};
 use std::env;
 use std::process::Command;
 
 use nl_sh::*;
 pub use crate::context::*;
+pub use crate::llama::*;
 pub use crate::model::*;
-pub use crate::openai::*;
 pub use crate::shell::*;
 
-const INIT_PROMPT_TEMPLATE: &'static str = "Given this output from the POSIX command `uname - smr`, provide the best next command to run to 
-  get specific details of the underlying operating system variant and version. Return only the command with no additional explanation or context. 
-  Here is the uname output: ";
-
+/// Initializes this instance's `Context`, by issuing a preliminary request to the `Model` 
+/// asking for the best next command to gather local OS and environment information, given
+/// the content of a call to `uname`
 fn 
-initialize_env_context (client: &OpenAIClient) -> Result<Context, APIError>
+initialize_env_context (model: &Box<dyn Model>) -> Result<Context, Box<dyn std::error::Error>>
 {
   let uname_output = Command::new("uname")
     .args(&["-smr"])
@@ -22,10 +20,8 @@ initialize_env_context (client: &OpenAIClient) -> Result<Context, APIError>
     .expect("failed to execute command");
 
   let os = std::str::from_utf8(&uname_output.stdout).expect("failed to convert uname stdout to String");
-  let os_prompt = format!("{} {}", INIT_PROMPT_TEMPLATE, os);
 
-  let result = issue_gpt4_request(&client, &os_prompt)?;
-  let os_response = result.choices[0].message.content.clone().unwrap();
+  let os_response = model.init_prompt(os)?;
 
   let mut args: Vec<String> = os_response.split_whitespace().map(String::from).collect();
   let os_command = args.remove(0);
@@ -49,10 +45,30 @@ initialize_env_context (client: &OpenAIClient) -> Result<Context, APIError>
 
 fn main() -> Result<(), Box<dyn std::error::Error>> 
 {
-  let client = OpenAIClient::new(env::var("OPENAI_API_KEY").unwrap().to_string());
-  let mut context = initialize_env_context(&client)?;
-  let model = GPT4 { client: client };
+  let matches = CommandArg::new("nl-sh")
+  .version("0.1")
+  .about("A natural language shell for *NIX systems")
+  .arg(arg!(--gpt4)
+    .required(false)
+    .value_name("BOOL")
+    .help("Use the GPT4 API as a backend, reading from the OPENAI_API_KEY environment variable"))
+  .arg(arg!(--llama <VALUE>)
+    .required(false)
+    .value_name("path")
+    .help("Use a local Llama model as a backend, located at the provided path"))
+  .get_matches();
 
-  shell_loop(&mut context, &model)?;
+  let gpt4_opt = matches.get_one::<bool>("gp4").cloned();
+  let llama_opt = matches.get_one::<String>("llama").cloned();
+
+  let model: Box<dyn Model> = match (gpt4_opt, llama_opt) {
+    (Some(true), _) => Box::new(GPT4 { client: gpt4_client() }),
+    (_, None) => Box::new(GPT4 { client: gpt4_client() }),
+    (_, Some(path)) => Box::new(LLama2 { llama: llama(&path) })
+  };
+
+  let mut context = initialize_env_context(&model)?;
+
+  shell_loop(&mut context, model)?;
   Ok(())
 }

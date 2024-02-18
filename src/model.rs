@@ -1,14 +1,24 @@
+use llama_cpp_rs::LLama;
 use openai_api_rs::v1::api::Client as OpenAIClient;
 
 pub use crate::context::*;
+pub use crate::llama::*;
 pub use crate::openai::*;
 
 pub trait Model {
+  /// Main query interface; uses the command prompt to collect NIX commands given the user string
   fn ask_model (&self, context: &Context, input: &str) -> Result<String, Box<dyn std::error::Error>>;
+
+  /// Used strictly for initialization of local context with information used to construct a better command query
+  fn init_prompt (&self, input: &str) -> Result<String, Box<dyn std::error::Error>>;
 }
 
 pub struct GPT4 {
   pub client: OpenAIClient
+}
+
+pub struct LLama2 {
+  pub llama: LLama
 }
 
 /// Constructs a prompt given current environment context, and issues a requet to OpenAI's GPT4 via their API client.
@@ -16,7 +26,20 @@ impl Model for GPT4 {
   fn
   ask_model (&self, context: &Context, input: &str) -> Result<String, Box<dyn std::error::Error>>
   {
-    let prompt = &construct_prompt(context, input);
+    self.request(&build_command_prompt(context, input))
+  }
+
+  fn
+  init_prompt (&self, input: &str) -> Result<String, Box<dyn std::error::Error>>
+  {
+    self.request(&&build_init_prompt(input))
+  }
+}
+
+impl GPT4 {
+  fn 
+  request (&self, prompt: &str) -> Result<String, Box<dyn std::error::Error>> 
+  {
     let result = issue_gpt4_request(&self.client, prompt)?;
 
     match result.choices[0].message.content.clone() {
@@ -26,8 +49,21 @@ impl Model for GPT4 {
   }
 }
 
+/// Constructs a prompt given current environment context, and issues a requet to a local Llama model
+impl Model for LLama2 {
+  fn 
+  ask_model (&self, context: &Context, input: &str) -> Result<String, Box<dyn std::error::Error>> {
+    issue_llama_request(&self.llama, &build_command_prompt(context, input))
+  }
+
+  fn 
+  init_prompt (&self, input: &str) -> Result<String, Box<dyn std::error::Error>> {
+    issue_llama_request(&self.llama, &build_init_prompt(input))
+  }
+}
+
 fn 
-construct_prompt (context: &Context, arg: &str) -> String 
+build_command_prompt (context: &Context, arg: &str) -> String 
 {
   format!(
     "Output the command-line arguments to satisfy the following prompt. 
@@ -40,5 +76,15 @@ construct_prompt (context: &Context, arg: &str) -> String
     If the prompt is already a valid POSIX command, then just return the original input.
     If the prompt is an incoherent request for a POSIX-style command, return an empty string.
     Here is the prompt: {}", context.uname, context.os, context.shell, context.pwd, arg
+  )
+}
+
+fn 
+build_init_prompt (arg: &str) -> String 
+{
+  format!(
+    "Given this output from the POSIX command `uname - smr`, provide the best next command to run to 
+    get specific details of the underlying operating system variant and version. Return only the command with no additional explanation or context. 
+    Here is the uname output: {}", arg
   )
 }

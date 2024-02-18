@@ -53,7 +53,6 @@ Here's a video demonstration:
 
 ![nl-sh](https://github.com/mikecvet/nl-sh/assets/275631/1f45f93a-a5e3-45ad-a4af-e3c92aa90cbb)
 
-
 ## What is this?
 
 - **POSIX Command Execution:** Run regular shell commands
@@ -62,4 +61,12 @@ Here's a video demonstration:
 
 ## How does this work?
 
-`nl-sh` acts like a (minimal) shell by wrapping the underlying shell with a prompt which accepts and executes text inputs from the user. Inputs which seem like actual POSIX commands are directly executed; otherwise the input is directed to a model (currently just GPT4) to interpret the input and provide a command sequence satisfying the request, customized for the local system powering the shell. This shell collects some environmental data such as kernal and OS version details to try and generate the most accurate command-line sequence for the given POSIX variant.
+`nl-sh` acts like a (minimal) shell by wrapping the underlying shell with a prompt which accepts and executes text inputs from the user. Inputs which seem like actual POSIX commands are directly executed; otherwise the input is directed to an LLM to interpret the input and provide a command sequence satisfying the request, customized for the local system powering the shell. This shell collects some environmental data such as kernal and OS version details to try and generate the most accurate command-line sequence for the given POSIX variant.
+
+The default behavior is to issue requests to the OpenAI API for GPT4 responses; this necessitates a `OPENAI_API_KEY` present in your shell environment. `nl-sh` can also be configured to use a GGUF Llama model present on the local machine:
+
+```
+  ./target/release/nl-sh --llama /Users/mike/Downloads/llama-2-7b.Q5_K_M.gguf
+```
+
+However I've found that this model does not perform well for this task.

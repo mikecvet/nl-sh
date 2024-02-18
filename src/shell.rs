@@ -64,7 +64,7 @@ maybe_update_context (cmd: &str, context: &mut Context) -> Result<(), Box<dyn st
  * subsequent commands and updates shell state.
  */
 pub fn
-shell_loop (context: &mut Context, model: &impl Model) -> Result<(), Box<dyn std::error::Error>>
+shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn std::error::Error>>
 {
   loop {
     // Define the prompt prefix string, something like
