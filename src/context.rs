@@ -47,9 +47,9 @@ impl Context
   }
 
   pub fn 
-  update_command (&mut self, cmd: &str) 
+  update_command (&mut self, cmd: &str) -> io::Result<()>
   {
-    self.history.maybe_append_command(cmd);
+    self.history.maybe_append_command(cmd)
   }
 
   pub fn 

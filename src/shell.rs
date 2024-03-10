@@ -58,7 +58,7 @@ maybe_update_context (cmd: &str, context: &mut Context) -> Result<(), Box<dyn st
     context.pwd = get_current_working_dir()?;
   }
 
-  context.update_command(cmd);
+  context.update_command(cmd)?;
 
   Ok(())
 }
