@@ -35,14 +35,14 @@ sanitize_stdout (stdout: &str) -> String
 impl Context 
 {
   pub fn 
-  init (uname: Vec<u8>, shell: &str, os: Vec<u8>) -> io::Result<Context> 
+  init (uname: Vec<u8>, shell: &str, os: Vec<u8>, stateless: bool) -> io::Result<Context> 
   {
     Ok(Context {
       uname: sanitize_stdout(std::str::from_utf8(&uname).expect("failed to convert stdout to String")),
       shell: shell.to_string(),
       os: sanitize_stdout(std::str::from_utf8(&os).expect("failed to convert stdout to String")),
       pwd: get_current_working_dir().unwrap(),
-      history: CommandHistory::init(shell, true)?
+      history: CommandHistory::init(shell, !stateless)?
     })
   }
 
