@@ -15,9 +15,11 @@ impl CommandHistory {
   {
     let mut enable_write_updates = write_updates;
 
-    // Determine the history file path based on the shell
+    // Determine the typical history file path based on the shell
     let history_file_path = match shell {
       "/bin/bash" => home::home_dir().unwrap().join(".bash_history"),
+      "/bin/ksh" => home::home_dir().unwrap().join(".sh_history"),
+      "/bin/tcsh" => home::home_dir().unwrap().join(".history"),
       "/bin/zsh" => home::home_dir().unwrap().join(".zsh_history"),
       _ => panic!("Unsupported shell"),
     };
