@@ -1,3 +1,4 @@
+pub mod command_history;
 pub mod context;
 pub mod llama;
 pub mod model;

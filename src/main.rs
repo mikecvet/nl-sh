@@ -35,7 +35,7 @@ initialize_env_context (model: &Box<dyn Model>) -> Result<Context, Box<dyn std::
 
   match (os_output.status.success(), shell_output) {
     (true, Ok(shell)) => {
-      Ok(Context::init(uname_output.stdout, &shell, os_output.stdout))
+      Ok(Context::init(uname_output.stdout, &shell, os_output.stdout)?)
     },
     (os_success, _) => {
       panic!("failed to collect outputs {}", os_success);

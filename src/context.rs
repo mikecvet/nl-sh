@@ -1,13 +1,16 @@
 use regex::Regex;
 use std::env;
-use std::io::Error;
+use std::io::{self, Error};
+
+pub use crate::command_history::*;
 
 /// Context about the environment in which this shell is being run. 
 pub struct Context {
   pub uname: String,
   pub shell: String,
   pub os: String,
-  pub pwd: String
+  pub pwd: String,
+  pub history: CommandHistory
 }
 
 /// Determine the environment's current working directory.
@@ -32,13 +35,26 @@ sanitize_stdout (stdout: &str) -> String
 impl Context 
 {
   pub fn 
-  init (uname: Vec<u8>, shell: &str, os: Vec<u8>) -> Context 
+  init (uname: Vec<u8>, shell: &str, os: Vec<u8>) -> io::Result<Context> 
   {
-    Context {
+    Ok(Context {
       uname: sanitize_stdout(std::str::from_utf8(&uname).expect("failed to convert stdout to String")),
       shell: shell.to_string(),
       os: sanitize_stdout(std::str::from_utf8(&os).expect("failed to convert stdout to String")),
-      pwd: get_current_working_dir().unwrap()
-    }
+      pwd: get_current_working_dir().unwrap(),
+      history: CommandHistory::init(shell, true)?
+    })
+  }
+
+  pub fn 
+  update_command (&mut self, cmd: &str) 
+  {
+    self.history.maybe_append_command(cmd);
+  }
+
+  pub fn 
+  get_command_history (&self) -> Vec<String>
+  {
+    self.history.get_history()
   }
 }

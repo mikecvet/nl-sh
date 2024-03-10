@@ -5,7 +5,8 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.2.7", features = ["derive"] }
-inquire = "0.6.2"
+home = "0.5.9"
+inquire = { path = "../inquire/inquire" }
 llama_cpp_rs = "0.3.0"
 openai-api-rs = "4.0.6"
 regex = "1"

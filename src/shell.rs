@@ -1,5 +1,6 @@
 use inquire::{Confirm, Text};
 use inquire::error::InquireError;
+use inquire::history::SimpleHistory;
 use std::env;
 use std::process::Command;
 
@@ -9,7 +10,8 @@ pub use crate::model::*;
 /// Some POSIX commands have verb-y characteristics, and for these, we'll let the LLM determine
 /// whether the user intent is to run a specfic command, or whether the request is something
 /// akin to "diff these two files" or "sort and print the text in a, b, and c"
-static COMMAND_EXCEPTIONS: &[&str] = &["alias", "cat", "diff", "expand", "find", "kill", "link", "log", "read", "sort", "split", "strip", "touch", "type", "what", "which", "who"];
+static COMMAND_EXCEPTIONS: &[&str] = &["alias", "cat", "diff", "expand", "find", "kill", "link", 
+  "log", "read", "sort", "split", "strip", "touch", "type", "what", "which", "who"];
 
 /**
  * Determine whether the input from the prompt is a likely system command. This is
@@ -56,6 +58,8 @@ maybe_update_context (cmd: &str, context: &mut Context) -> Result<(), Box<dyn st
     context.pwd = get_current_working_dir()?;
   }
 
+  context.update_command(cmd);
+
   Ok(())
 }
 
@@ -72,7 +76,9 @@ shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn 
     let terminal_prompt = std::format!("[nl-sh] {} $", context.pwd.as_str());
 
     // Collect the user input from the prompt
-    let input = Text::new(&terminal_prompt).prompt();
+    let input = Text::new(&terminal_prompt)
+      .with_history(SimpleHistory::new(context.get_command_history()))
+      .prompt();
 
     match input {
       Ok(input) => {
@@ -119,7 +125,8 @@ shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn 
             if output.status.success() {
               println!("{}", std::str::from_utf8(&output.stdout).expect("failed to convert stdout to String"));
             } else {
-              println!("Executed [{}] and got error: {}", cmd, std::str::from_utf8(&output.stderr).expect("failed to convert stdout to String"));
+              println!("Executed [{}] and got error: {}", 
+                cmd, std::str::from_utf8(&output.stderr).expect("failed to convert stdout to String"));
             }
           },
           Ok(false) => {
