@@ -17,7 +17,7 @@ This is discussed a little further [here](https://mikecvet.medium.com/nl-sh-the-
 
 In particular, I've had success with `Mistral 7B Instruct`, and `CodeLlama 7B`. Some other OS models, such as raw `Llama2` do not work as well; often because they're a little too chatty and helpful =)
 
-`nl-sh` is best demonstrated with some examples:
+`nl-sh` is best demonstrated with some examples (default behavior is to use GPT4 and assume `OPENAI_API_KEY` is available):
 
 ```
   ~/code/nl-sh ~>> ./target/release/nl-sh --help 
@@ -60,6 +60,17 @@ In particular, I've had success with `Mistral 7B Instruct`, and `CodeLlama 7B`. 
     564     1  31.1 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer
   17422     1  13.8 /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.WebContent.xpc/Contents/MacOS/com.apple.WebKit.WebContent
    1295     1  10.0 /System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app/Contents/MacOS/Safari
+```
+
+Now with a local model:
+
+```
+  ~/code/nl-sh ~>> ./target/release/nl-sh --local ~/Downloads/mistral-7b-instruct-v0.2.Q8_0.gguf
+  > [nl-sh] /Users/mike/code/nl-sh $ show me the top 3 largest files in the current directory, in human-readable size format
+  > du -ah | sort -rh | head -n 3 (Y/n)
+  79G   .
+  32G   ./gemma-7b.gguf
+ 9.3G   ./gemma-2b.gguf
 ```
 
 Here's a video demonstration:
