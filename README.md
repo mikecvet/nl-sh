@@ -65,12 +65,12 @@ In particular, I've had success with `Mistral 7B Instruct`, and `CodeLlama 7B`. 
 Now with a local model:
 
 ```
-  ~/code/nl-sh ~>> ./target/release/nl-sh --local ~/Downloads/mistral-7b-instruct-v0.2.Q8_0.gguf
+  ~/code/nl-sh ~>> ./target/release/nl-sh --local ./mistral-7b-instruct-v0.2.Q8_0.gguf
   > [nl-sh] /Users/mike/code/nl-sh $ show me the top 3 largest files in the current directory, in human-readable size format
-  > du -ah | sort -rh | head -n 3 (Y/n)
-  79G   .
-  32G   ./gemma-7b.gguf
- 9.3G   ./gemma-2b.gguf
+  > du -ah | grep gguf | sort -rh | head -n 3 Yes
+   32G	./gemma-7b.gguf
+  9.3G	./gemma-2b.gguf
+  8.5G	./gemma-7b-it-Q8_0.gguf (Y/n)
 ```
 
 Here's a video demonstration:
