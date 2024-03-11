@@ -4,7 +4,7 @@
 
 `nl-sh` stands for Natural Language Shell, a novel approach to interacting with POSIX systems through natural language understanding through LLMs. This project aims to bridge the gap between traditional shell command execution and natural language interpretation, providing a user-friendly interface for executing complex system commands using simple English prompts. This is functional proof-of-concept. `nl-sh` makes working in terminals more accessible and intuitive, as the shell accepts both traditional POSIX commands as well as human-language instructions for system operations; the best command sequence satisfying that human prompt is provided back to the user for verification before execution.
 
-The point of this shell is to elimiate the tedious manual tasks of googling Stack Overflow or grepping through man pages to figure out the right combination of commands, arguments, pipes and flags to complete complex operations from the command line. This provides a human-centered CLI experience, for those who spend time on *NIX variants but are poorly-versed in the entire command vocabulary.
+The point of this shell is to eliminate the tedious manual tasks of googling Stack Overflow or grepping through man pages to figure out the right combination of commands, arguments, pipes and flags to complete complex operations from the command line. This provides a human-centered CLI experience, for those who spend time on *NIX variants but are poorly-versed in the entire command vocabulary.
 
 This is discussed a little further [here](https://mikecvet.medium.com/nl-sh-the-natural-language-shell-ad2ddc2e13a7)
 
