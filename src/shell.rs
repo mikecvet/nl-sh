@@ -75,7 +75,7 @@ shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn 
     // [nl-sh] /Users/mike $
     let terminal_prompt = std::format!("[nl-sh] {} $", context.pwd.as_str());
 
-    // Collect the user input from the prompt
+    // Collect the user input from the prompt; update the prompt history from the context
     let input = Text::new(&terminal_prompt)
       .with_history(SimpleHistory::new(context.get_command_history()))
       .prompt();

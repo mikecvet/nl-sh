@@ -13,7 +13,8 @@ pub trait Model {
   fn init_prompt (&self, input: &str) -> Result<String, Box<dyn std::error::Error>>;
 }
 
-pub struct GPT4 {
+pub struct GPT {
+  pub version: String,
   pub client: OpenAIClient
 }
 
@@ -22,7 +23,7 @@ pub struct LLama2 {
 }
 
 /// Constructs a prompt given current environment context, and issues a requet to OpenAI's GPT4 via their API client.
-impl Model for GPT4 {
+impl Model for GPT {
   fn
   ask_model (&self, context: &Context, input: &str) -> Result<String, Box<dyn std::error::Error>>
   {
@@ -32,15 +33,15 @@ impl Model for GPT4 {
   fn
   init_prompt (&self, input: &str) -> Result<String, Box<dyn std::error::Error>>
   {
-    self.request(&&build_init_prompt(input))
+    self.request(&build_init_prompt(input))
   }
 }
 
-impl GPT4 {
+impl GPT {
   fn 
   request (&self, prompt: &str) -> Result<String, Box<dyn std::error::Error>> 
   {
-    let result = issue_gpt4_request(&self.client, prompt)?;
+    let result = issue_open_ai_request(&self.client, self.version.clone(), prompt)?;
 
     match result.choices[0].message.content.clone() {
       Some(message) => Ok(message),
@@ -82,9 +83,15 @@ build_command_prompt (context: &Context, arg: &str) -> String
 fn 
 build_init_prompt (arg: &str) -> String 
 {
+  let s = 
   format!(
-    "Given this output from the POSIX command `uname - smr`, provide the best next command to run to 
+    "Given this output from the POSIX command `uname - smr`, provide the best next command to run within a shell to 
     get specific details of the underlying operating system variant and version. Return only the command with no additional explanation or context. 
+    This should not be a script, but a simple command-line command which is directly executable. For example, on Mac OS, an appropriate command might be simply `sw_vers`.
     Here is the uname output: {}", arg
-  )
+  );
+
+  println!("issuing init prompt: [{}]", s.clone());
+
+  s
 }
