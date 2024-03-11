@@ -75,7 +75,7 @@ Now with a local model:
 
 Here's a video demonstration:
 
-![nl-sh](https://github.com/mikecvet/nl-sh/assets/275631/fc89f418-49e9-428f-9c33-aed00f7cb169))
+![nl-sh](https://github.com/mikecvet/nl-sh/assets/275631/fc89f418-49e9-428f-9c33-aed00f7cb169)
 
 ## How does this work?
 
