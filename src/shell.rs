@@ -13,15 +13,13 @@ pub use crate::model::*;
 static COMMAND_EXCEPTIONS: &[&str] = &["alias", "cat", "diff", "expand", "find", "kill", "link", 
   "list", "log", "read", "sort", "split", "strip", "touch", "type", "what", "which", "who"];
 
-/**
- * Determine whether the input from the prompt is a likely system command. This is
- * a best-effort attempt to short-circut requests to an LLM, to improve performance
- * for the most obvious native command interpreted by the prompt.
- * 
- * In the case where the user request is ambiguous, as defined by the set 
- * of COMMAND_EXCEPTIONS strings, fall through and indicate to pass the user input
- * to the LLM to rationalize.
- */
+/// Determine whether the input from the prompt is a likely system command. This is
+/// a best-effort attempt to short-circut requests to an LLM, to improve performance
+/// for the most obvious native command interpreted by the prompt.
+/// 
+/// In the case where the user request is ambiguous, as defined by the set 
+/// of COMMAND_EXCEPTIONS strings, fall through and indicate to pass the user input
+/// to the LLM to rationalize.
 fn 
 likely_system_command (context: &Context, command: &String) -> bool {
   let parts: Vec<&str> = command.split_whitespace().collect();
@@ -42,9 +40,7 @@ likely_system_command (context: &Context, command: &String) -> bool {
   }
 }
 
-/**
- * Conditionally updates the given `Context`, depending on the nature of the sucessfullly-executed command string.
- */
+/// Conditionally updates the given `Context`, depending on the nature of the sucessfullly-executed command string.
 fn 
 maybe_update_context (cmd_input: &str, context: &mut Context) -> Result<(), Box<dyn std::error::Error>>
 {
@@ -64,10 +60,8 @@ maybe_update_context (cmd_input: &str, context: &mut Context) -> Result<(), Box<
   Ok(())
 }
 
-/**
- * Main shell UI loop. Collects input from the user, conditionally consults LLMs depending on the user prompt, executes
- * subsequent commands and updates shell state.
- */
+/// Main shell UI loop. Collects input from the user, conditionally consults LLMs depending on the user prompt, executes
+/// subsequent commands and updates shell state.
 pub fn
 shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn std::error::Error>>
 {

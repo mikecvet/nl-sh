@@ -57,10 +57,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>>
       .action(ArgAction::SetTrue)
       .default_value("true")
       .help("Use the GPT3.5 Turbo API as a backend, reading from the OPENAI_API_KEY environment variable"))
-    .arg(Arg::new("llama")
-      .long("llama")
+    .arg(Arg::new("local")
+      .long("local")
       .value_name("path")
-      .help("Use a local Llama model as a backend, located at the provided path"))
+      .help("Use a local GGUF-based model as a backend, located at the provided path"))
     .arg(Arg::new("stateless")
       .long("stateless")
       .action(ArgAction::SetTrue)
@@ -70,17 +70,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>>
   
   let mut gpt4 = matches.get_one::<bool>("gpt4").map(|&b| b).unwrap_or(true);
   let gpt35 = matches.get_one::<bool>("gpt35").map(|&b| b).unwrap_or(false);
-  let llama_opt = matches.get_one::<String>("llama").cloned();
+  let local_opt = matches.get_one::<String>("llama").cloned();
   let stateless = matches.get_one::<bool>("stateless").map(|&b| b).unwrap_or(false);
 
-  if llama_opt.is_some() || gpt35 {
+  if local_opt.is_some() || gpt35 {
     gpt4 = false;
   }
 
-  let model: Box<dyn Model> = match (gpt4, gpt35, llama_opt) {
+  let model: Box<dyn Model> = match (gpt4, gpt35, local_opt) {
     (true, _, _) => Box::new(GPT { version: gpt4_version(), client: open_ai_api_client() }),
     (false, true, _) => Box::new(GPT { version: gpt35_version(), client: open_ai_api_client() }),
-    (false, false, Some(path)) => Box::new(LLama2 { llama: llama(&path) }),
+    (false, false, Some(path)) => Box::new(LocalLLM { local: local_llm(&path) }),
     (false, false, None) => panic!("no model specified")
   };
 

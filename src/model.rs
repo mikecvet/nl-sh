@@ -18,8 +18,8 @@ pub struct GPT {
   pub client: OpenAIClient
 }
 
-pub struct LLama2 {
-  pub llama: LLama
+pub struct LocalLLM {
+  pub local: LLama
 }
 
 /// Constructs a prompt given current environment context, and issues a requet to OpenAI's GPT4 via their API client.
@@ -51,15 +51,15 @@ impl GPT {
 }
 
 /// Constructs a prompt given current environment context, and issues a requet to a local Llama model
-impl Model for LLama2 {
+impl Model for LocalLLM {
   fn 
   ask_model (&self, context: &Context, input: &str) -> Result<String, Box<dyn std::error::Error>> {
-    issue_llama_request(&self.llama, &build_command_prompt(context, input))
+    issue_local_llm_request(&self.local, &build_command_prompt(context, input))
   }
 
   fn 
   init_prompt (&self, input: &str) -> Result<String, Box<dyn std::error::Error>> {
-    issue_llama_request(&self.llama, &build_init_prompt(input))
+    issue_local_llm_request(&self.local, &build_init_prompt(input))
   }
 }
 
