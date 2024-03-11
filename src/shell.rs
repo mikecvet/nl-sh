@@ -46,9 +46,9 @@ likely_system_command (context: &Context, command: &String) -> bool {
  * Conditionally updates the given `Context`, depending on the nature of the sucessfullly-executed command string.
  */
 fn 
-maybe_update_context (cmd: &str, context: &mut Context) -> Result<(), Box<dyn std::error::Error>>
+maybe_update_context (cmd_input: &str, context: &mut Context) -> Result<(), Box<dyn std::error::Error>>
 {
-  let mut parts: Vec<&str> = cmd.split_whitespace().collect();
+  let mut parts: Vec<&str> = cmd_input.split_whitespace().collect();
   let cmd = parts.remove(0);
 
   if cmd.to_owned().to_lowercase().eq("cd") && parts.len() > 1 {
@@ -59,7 +59,7 @@ maybe_update_context (cmd: &str, context: &mut Context) -> Result<(), Box<dyn st
   }
 
   // Possibly update command history with this most recent command
-  context.update_command(cmd)?;
+  context.update_command(cmd_input)?;
 
   Ok(())
 }
