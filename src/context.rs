@@ -46,6 +46,26 @@ impl Context
     })
   }
 
+  /// Conditionally updates the given `Context`, depending on the nature of the sucessfullly-executed command string.
+  pub fn
+  update (&mut self, cmd_input: &str) -> Result<(), Box<dyn std::error::Error>>
+  {
+    let mut parts: Vec<&str> = cmd_input.split_whitespace().collect();
+    let cmd = parts.remove(0);
+
+    if cmd.to_owned().to_lowercase().eq("cd") && parts.len() >= 1 {
+      // If this was a change-directory command, set the current environment to
+      // cd's subsequent argument and update `context.pwd`
+      env::set_current_dir(parts.remove(0))?;
+      self.pwd = get_current_working_dir()?;
+    }
+
+    // Possibly update command history with this most recent command
+    self.update_command(cmd_input)?;
+
+    Ok(())
+  }
+
   pub fn 
   update_command (&mut self, cmd: &str) -> io::Result<()>
   {

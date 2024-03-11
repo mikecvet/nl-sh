@@ -1,7 +1,6 @@
 use inquire::{Confirm, Text};
 use inquire::error::InquireError;
 use inquire::history::SimpleHistory;
-use std::env;
 use std::process::Command;
 
 pub use crate::context::*;
@@ -38,26 +37,6 @@ likely_system_command (context: &Context, command: &String) -> bool {
       .map(|output| output.status.success())
       .unwrap_or(false)
   }
-}
-
-/// Conditionally updates the given `Context`, depending on the nature of the sucessfullly-executed command string.
-fn 
-maybe_update_context (cmd_input: &str, context: &mut Context) -> Result<(), Box<dyn std::error::Error>>
-{
-  let mut parts: Vec<&str> = cmd_input.split_whitespace().collect();
-  let cmd = parts.remove(0);
-
-  if cmd.to_owned().to_lowercase().eq("cd") && parts.len() > 1 {
-    // If this was a change-directory command, set the current environment to
-    // cd's subsequent argument and update `context.pwd`
-    env::set_current_dir(parts.remove(0))?;
-    context.pwd = get_current_working_dir()?;
-  }
-
-  // Possibly update command history with this most recent command
-  context.update_command(cmd_input)?;
-
-  Ok(())
 }
 
 /// Main shell UI loop. Collects input from the user, conditionally consults LLMs depending on the user prompt, executes
@@ -118,11 +97,14 @@ shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn 
               .expect("failed to execute command");
 
             if output.status.success() {
-              println!("{}", std::str::from_utf8(&output.stdout).expect("failed to convert stdout to String"));
+              print!("\n{}", std::str::from_utf8(&output.stdout).expect("failed to convert stdout to String"));
             } else {
               println!("Executed [{}] and got error: {}", 
                 cmd, std::str::from_utf8(&output.stderr).expect("failed to convert stdout to String"));
             }
+
+            // Update the context state based on the issued command
+            context.update(&cmd)?
           },
           Ok(false) => {
             println!("Aborting command")
@@ -136,8 +118,6 @@ shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn 
             break Ok(());
           }
         }
-
-        maybe_update_context(&cmd, context)?;
       }, // Ok(input)
     Err(e) if matches!(e, InquireError::OperationCanceled) || matches!(e, InquireError::OperationInterrupted) => {
       // This was a ^C or esc
