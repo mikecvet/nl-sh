@@ -22,8 +22,6 @@ initialize_env_context (model: &Box<dyn Model>, stateless: bool) -> Result<Conte
   let os = std::str::from_utf8(&uname_output.stdout).expect("failed to convert uname stdout to String");
   let os_response = model.init_prompt(os)?;
 
-  println!("got model init response: [{}]", os_response.clone());
-
   let mut args: Vec<String> = os_response.split_whitespace().map(String::from).collect();
   let os_command = args.remove(0);
 

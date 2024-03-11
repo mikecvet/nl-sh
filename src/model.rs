@@ -83,15 +83,10 @@ build_command_prompt (context: &Context, arg: &str) -> String
 fn 
 build_init_prompt (arg: &str) -> String 
 {
-  let s = 
   format!(
     "Given this output from the POSIX command `uname - smr`, provide the best next command to run within a shell to 
     get specific details of the underlying operating system variant and version. Return only the command with no additional explanation or context. 
     This should not be a script, but a simple command-line command which is directly executable. For example, on Mac OS, an appropriate command might be simply `sw_vers`.
     Here is the uname output: {}", arg
-  );
-
-  println!("issuing init prompt: [{}]", s.clone());
-
-  s
+  )
 }

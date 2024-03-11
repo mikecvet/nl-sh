@@ -11,7 +11,7 @@ pub use crate::model::*;
 /// whether the user intent is to run a specfic command, or whether the request is something
 /// akin to "diff these two files" or "sort and print the text in a, b, and c"
 static COMMAND_EXCEPTIONS: &[&str] = &["alias", "cat", "diff", "expand", "find", "kill", "link", 
-  "log", "read", "sort", "split", "strip", "touch", "type", "what", "which", "who"];
+  "list", "log", "read", "sort", "split", "strip", "touch", "type", "what", "which", "who"];
 
 /**
  * Determine whether the input from the prompt is a likely system command. This is
@@ -51,13 +51,14 @@ maybe_update_context (cmd: &str, context: &mut Context) -> Result<(), Box<dyn st
   let mut parts: Vec<&str> = cmd.split_whitespace().collect();
   let cmd = parts.remove(0);
 
-  if cmd.to_owned().to_lowercase().eq("cd") {
+  if cmd.to_owned().to_lowercase().eq("cd") && parts.len() > 1 {
     // If this was a change-directory command, set the current environment to
     // cd's subsequent argument and update `context.pwd`
     env::set_current_dir(parts.remove(0))?;
     context.pwd = get_current_working_dir()?;
   }
 
+  // Possibly update command history with this most recent command
   context.update_command(cmd)?;
 
   Ok(())
