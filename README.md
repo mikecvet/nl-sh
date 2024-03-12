@@ -13,7 +13,7 @@ This is discussed a little further [here](https://mikecvet.medium.com/nl-sh-the-
 - Can use in any window-based or remote terminal setting, as an overlay on top of the current envionment's shell
 - Accepts either direct system commands, or expressive language-based commands, which are interpreted by an LLM
 - Loads prior shell history (bash, ksh, tcsh, zsh), allows history navigation and updates underlying shell history with executed commands
-- Supports GPT 3.5 Turbo, GPT 4, Claude 2.1, and any locally-available open-source GGUF-formatted LLM
+- Supports `GPT 3.5 Turbo`, `GPT 4`, `Claude 2.1`, and any locally-available open-source `GGUF` formatted LLM
 
 In particular, I've had success with `Mistral 7B Instruct`, and `CodeLlama 7B`. Some other OS models, such as raw `Llama2` do not work as well; often because they're a little too chatty and helpful =)
 
