@@ -1,16 +1,38 @@
 use inquire::{Confirm, Text};
 use inquire::error::InquireError;
 use inquire::history::SimpleHistory;
+use std::io;
 use std::process::Command;
 
 pub use crate::context::*;
 pub use crate::model::*;
+
+#[cfg(test)]
+use mockall::{automock, predicate::*};
 
 /// Some POSIX commands have verb-y characteristics, and for these, we'll let the LLM determine
 /// whether the user intent is to run a specfic command, or whether the request is something
 /// akin to "diff these two files" or "sort and print the text in a, b, and c"
 static COMMAND_EXCEPTIONS: &[&str] = &["alias", "cat", "diff", "expand", "find", "kill", "link", 
   "list", "log", "read", "sort", "split", "strip", "touch", "type", "what", "which", "who"];
+
+#[cfg_attr(test, automock)]
+trait CommandExecutorInterface {
+  fn execute(&self, shell: &str, command: &str) -> io::Result<bool>;
+}
+
+struct CommandExecutor;
+
+impl CommandExecutorInterface for CommandExecutor {
+  fn execute(&self, shell: &str, command: &str) -> io::Result<bool> {
+      std::process::Command::new(shell)
+        .arg("-c")
+        .arg(format!("command -v {}", command))
+        .output()
+        .map(|output| output.status.success())
+  }
+}
+
 
 /// Determine whether the input from the prompt is a likely system command. This is
 /// a best-effort attempt to short-circut requests to an LLM, to improve performance
@@ -20,7 +42,7 @@ static COMMAND_EXCEPTIONS: &[&str] = &["alias", "cat", "diff", "expand", "find",
 /// of COMMAND_EXCEPTIONS strings, fall through and indicate to pass the user input
 /// to the LLM to rationalize.
 fn 
-likely_system_command (context: &Context, command: &String) -> bool {
+likely_system_command (context: &Context, command: &String, executor: &dyn CommandExecutorInterface) -> bool {
   let parts: Vec<&str> = command.split_whitespace().collect();
   let cmd = parts.get(0).unwrap_or(&"").to_lowercase(); // Extract the just command without arguments
 
@@ -30,12 +52,7 @@ likely_system_command (context: &Context, command: &String) -> bool {
   } else {
     // Determine whether the first word in the user input is valid command on this system, 
     // via $SHELL command -v <cmd>
-    Command::new(context.shell.clone())
-      .arg("-c")
-      .arg(format!("command -v {}", cmd))
-      .output()
-      .map(|output| output.status.success())
-      .unwrap_or(false)
+    executor.execute(&context.shell, &cmd).unwrap_or(false)
   }
 }
 
@@ -44,6 +61,8 @@ likely_system_command (context: &Context, command: &String) -> bool {
 pub fn
 shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn std::error::Error>>
 {
+  let executor = CommandExecutor {};
+
   loop {
     // Define the prompt prefix string, something like
     // [nl-sh] /Users/mike $
@@ -63,7 +82,7 @@ shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn 
         // If the input is a likely and unambiguous system command, we'll take the text as-is and exec it through the shell.
         // Otherwise, we'll pass the input to the model and let the LLM sort it out. If it is, in fact, a valid
         // command and argument, the model should return the input string.
-        let cmd = if likely_system_command(context, &input) {
+        let cmd = if likely_system_command(context, &input, &executor) {
           input.clone() 
         } else {
           // Fetch input rationalization from the model
@@ -129,5 +148,49 @@ shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn 
       break Ok(());
     }
    }
+  }
+}
+
+#[cfg(test)]
+mod tests 
+{
+  use super::*;
+
+  fn
+  get_test_context() -> Context 
+  {
+    Context {
+      uname: "Darwin".to_string(),
+      shell: "/bin/zsh".to_string(),
+      os: "Darwin 23.3.0 arm64".to_string(),
+      pwd: "/home".to_string(),
+      history: CommandHistory::init("/bin/zsh", false).unwrap(),
+    }
+  }
+
+  #[test]
+  fn test_likely_system_command() 
+  {
+    let mut mock_executor = MockCommandExecutorInterface::new();
+    mock_executor.expect_execute()
+      .with(eq("/bin/zsh"), eq("ls"))
+      .returning(|_, _| Ok(true));
+
+    let context = get_test_context();
+
+    assert!(likely_system_command(&context, &"ls".to_string(), &mock_executor));
+  }
+
+  #[test]
+  fn test_not_likely_system_command() 
+  {
+    let mut mock_executor = MockCommandExecutorInterface::new();
+    mock_executor.expect_execute()
+      .with(eq("/bin/zsh"), eq("alias"))
+      .returning(|_, _| Ok(false));
+
+    let context = get_test_context();
+
+    assert!(!likely_system_command(&context, &"alias".to_string(), &mock_executor));
   }
 }

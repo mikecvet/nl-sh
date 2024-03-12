@@ -78,3 +78,44 @@ impl Context
     self.history.get_history()
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use std::env;
+  use tempfile;
+
+  #[test]
+  fn test_get_current_working_dir_success() {
+    let cwd = get_current_working_dir().unwrap();
+    assert_eq!(cwd, env::current_dir().unwrap().into_os_string().into_string().unwrap());
+  }
+
+  #[test]
+  fn test_sanitize_stdout() {
+    let input = "This is    a  test\n";
+    let expected = "This is a test";
+    assert_eq!(sanitize_stdout(input), expected);
+  }
+
+  #[test]
+  fn test_context_update_cd_command() {
+    // Setup - create a temporary directory and initialize Context
+    let temp_dir = tempfile::tempdir().unwrap();
+    let mut context = Context {
+      uname: "Darwin".to_string(),
+      shell: "/bin/zsh".to_string(),
+      os: "Darwin 23.3.0 arm64".to_string(),
+      pwd: "/home".to_string(),
+      history: CommandHistory::init("/bin/zsh", false).unwrap(),
+    };
+
+    // Test - change directory to temp_dir
+    let cmd_input = format!("cd {}", temp_dir.path().to_str().unwrap());
+    context.update(&cmd_input).unwrap();
+
+    // This is a contains rather than an equality check because of the
+    // usage of /private symlink for temp files on Mac OS
+    assert!(context.pwd.contains(temp_dir.path().to_str().unwrap()));
+  }
+}

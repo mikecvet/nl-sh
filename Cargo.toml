@@ -8,5 +8,7 @@ clap = { version = "4.2.7", features = ["derive"] }
 home = "0.5.9"
 inquire = { git = "https://github.com/mikecvet/inquire.git", branch = "history" }
 llama_cpp_rs = "0.3.0"
+mockall = "=0.9.1"
 openai-api-rs = "4.0.7"
 regex = "1"
+tempfile = "3.10.1"
