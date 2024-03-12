@@ -1,8 +1,11 @@
+use anthropic::client::Client as AnthropicClient;
 use llama_cpp_rs::LLama;
 use openai_api_rs::v1::api::Client as OpenAIClient;
+use tokio::runtime::Runtime;
 
+pub use crate::anthropic::*;
 pub use crate::context::*;
-pub use crate::llama::*;
+pub use crate::local::*;
 pub use crate::openai::*;
 
 pub trait Model {
@@ -20,6 +23,11 @@ pub struct GPT {
 
 pub struct LocalLLM {
   pub local: LLama
+}
+
+pub struct Claude {
+  pub version: String,
+  pub client: AnthropicClient
 }
 
 /// Constructs a prompt given current environment context, and issues a requet to OpenAI's GPT4 via their API client.
@@ -60,6 +68,31 @@ impl Model for LocalLLM {
   fn 
   init_prompt (&self, input: &str) -> Result<String, Box<dyn std::error::Error>> {
     issue_local_llm_request(&self.local, &build_init_prompt(input))
+  }
+}
+
+impl Model for Claude {
+  fn
+  ask_model (&self, context: &Context, input: &str) -> Result<String, Box<dyn std::error::Error>>
+  {
+    self.request(&build_command_prompt(context, input))
+  }
+
+  fn
+  init_prompt (&self, input: &str) -> Result<String, Box<dyn std::error::Error>>
+  {
+    self.request(&build_init_prompt(input))
+  }
+}
+
+impl Claude {
+  fn 
+  request (&self, prompt: &str) -> Result<String, Box<dyn std::error::Error>> 
+  {
+    match Runtime::new()?.block_on(issue_anthropic_request(&self.client, self.version.clone(), prompt)) {
+      Ok(response) => Ok(response.completion),
+      Err(e) => Err(Box::new(e))
+    }
   }
 }
 

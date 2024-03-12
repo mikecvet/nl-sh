@@ -3,8 +3,9 @@ use std::env;
 use std::process::Command;
 
 use nl_sh::*;
+pub use crate::anthropic::*;
 pub use crate::context::*;
-pub use crate::llama::*;
+pub use crate::local::*;
 pub use crate::model::*;
 pub use crate::shell::*;
 
@@ -55,8 +56,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>>
     .arg(Arg::new("gpt35")
       .long("gpt35")
       .action(ArgAction::SetTrue)
-      .default_value("true")
+      .default_value("false")
       .help("Use the GPT3.5 Turbo API as a backend, reading from the OPENAI_API_KEY environment variable"))
+    .arg(Arg::new("claude")
+      .long("claude")
+      .action(ArgAction::SetTrue)
+      .default_value("false")
+      .help("Use the Claude API as a backend, reading from the CLAUDE_API_KEY environment variable"))  
     .arg(Arg::new("local")
       .long("local")
       .value_name("path")
@@ -70,18 +76,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>>
   
   let mut gpt4 = matches.get_one::<bool>("gpt4").map(|&b| b).unwrap_or(true);
   let gpt35 = matches.get_one::<bool>("gpt35").map(|&b| b).unwrap_or(false);
+  let claude = matches.get_one::<bool>("claude").map(|&b| b).unwrap_or(false);
   let local_opt = matches.get_one::<String>("llama").cloned();
   let stateless = matches.get_one::<bool>("stateless").map(|&b| b).unwrap_or(false);
 
-  if local_opt.is_some() || gpt35 {
+  if local_opt.is_some() || gpt35 || claude {
     gpt4 = false;
   }
 
-  let model: Box<dyn Model> = match (gpt4, gpt35, local_opt) {
-    (true, _, _) => Box::new(GPT { version: gpt4_version(), client: open_ai_api_client() }),
-    (false, true, _) => Box::new(GPT { version: gpt35_version(), client: open_ai_api_client() }),
-    (false, false, Some(path)) => Box::new(LocalLLM { local: local_llm(&path) }),
-    (false, false, None) => panic!("no model specified")
+  let model: Box<dyn Model> = match (gpt4, gpt35, claude, local_opt) {
+    (true, _, _, _) => Box::new(GPT { version: gpt4_version(), client: open_ai_api_client() }),
+    (false, true, _, _) => Box::new(GPT { version: gpt35_version(), client: open_ai_api_client() }),
+    (false, false, true, _) => Box::new(Claude { version: claude_version(), client: anthropic_client() }),
+    (false, false, false, Some(path)) => Box::new(LocalLLM { local: local_llm(&path) }),
+    (false, false, false, None) => panic!("no model specified")
   };
 
   let mut context = initialize_env_context(&model, stateless)?;

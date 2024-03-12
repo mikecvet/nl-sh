@@ -14,7 +14,7 @@ use mockall::{automock, predicate::*};
 /// whether the user intent is to run a specfic command, or whether the request is something
 /// akin to "diff these two files" or "sort and print the text in a, b, and c"
 static COMMAND_EXCEPTIONS: &[&str] = &["alias", "cat", "diff", "expand", "find", "kill", "link", 
-  "list", "log", "read", "sort", "split", "strip", "touch", "type", "what", "which", "who"];
+  "list", "log", "print", "read", "sort", "split", "strip", "touch", "type", "what", "which", "who"];
 
 #[cfg_attr(test, automock)]
 trait CommandExecutorInterface {
@@ -96,8 +96,8 @@ shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn 
         } else if cmd.trim().is_empty() {
           // If the command string is empty, this means the model didn't consider the input to be a sensible
           // shell command.
-          println!("could not interpret request");
-          Ok(true)
+          println!("\ncould not interpret request");
+          continue;
         } else {
           // Confirm with the user that they would like to execute the command
           Confirm::new(&cmd)

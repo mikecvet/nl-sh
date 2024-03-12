@@ -1,6 +1,7 @@
+pub mod anthropic;
 pub mod command_history;
 pub mod context;
-pub mod llama;
+pub mod local;
 pub mod model;
 pub mod openai;
 pub mod shell;
