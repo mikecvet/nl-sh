@@ -62,7 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>>
       .long("claude")
       .action(ArgAction::SetTrue)
       .default_value("false")
-      .help("Use the Claude API as a backend, reading from the CLAUDE_API_KEY environment variable"))  
+      .help("Use the Anthropic Claude API as a backend, reading from the CLAUDE_API_KEY environment variable"))  
     .arg(Arg::new("local")
       .long("local")
       .value_name("path")
