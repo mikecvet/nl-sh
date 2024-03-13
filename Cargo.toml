@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 anthropic = { git="https://github.com/AbdelStark/anthropic-rs.git" }
+cc = "=1.0.83"
 clap = { version = "4.2.7", features = ["derive"] }
 home = "0.5.9"
 inquire = { git = "https://github.com/mikecvet/inquire.git", branch = "history" }
