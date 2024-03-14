@@ -68,9 +68,6 @@ impl Model for LocalLLM {
   fn 
   init_prompt (&self, input: &str) -> Result<String, Box<dyn std::error::Error>> {
     let s = issue_local_llm_request(&self.local, &build_init_prompt(input))?;
-
-    println!("local response: [{}]", s.clone());
-
     Ok(s)
   }
 }

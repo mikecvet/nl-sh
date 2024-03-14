@@ -18,7 +18,6 @@ pub fn
 issue_local_llm_request (local_llm: &LLama, prompt: &str) -> Result<String, Box<dyn std::error::Error>>
 {
   let options = PredictOptions::default();
-  println!("local request: [{}]", prompt);
 
   match local_llm.predict(prompt.into(), options) {
     Ok(text) => {
@@ -54,8 +53,6 @@ extract_command (text: &str) -> Option<String>
 {
   if text.contains("```") {
     let re = Regex::new(r"```[a-zA-Z]*\n([\s\S]*?)```").unwrap();
-
-    println!("extracting commands from following text: [{}]", text);
 
     if let Some(caps) = re.captures(text) {
       caps.get(1).map(|matched| matched.as_str().trim().to_string())
