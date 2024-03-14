@@ -77,7 +77,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>>
   let mut gpt4 = matches.get_one::<bool>("gpt4").map(|&b| b).unwrap_or(true);
   let gpt35 = matches.get_one::<bool>("gpt35").map(|&b| b).unwrap_or(false);
   let claude = matches.get_one::<bool>("claude").map(|&b| b).unwrap_or(false);
-  let local_opt = matches.get_one::<String>("llama").cloned();
+  let local_opt = matches.get_one::<String>("local").cloned();
   let stateless = matches.get_one::<bool>("stateless").map(|&b| b).unwrap_or(false);
 
   if local_opt.is_some() || gpt35 || claude {
