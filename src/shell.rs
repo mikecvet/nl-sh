@@ -99,6 +99,7 @@ shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn 
           println!("\ncould not interpret request");
           continue;
         } else {
+          print!("\n");
           // Confirm with the user that they would like to execute the command
           Confirm::new(&cmd)
             .with_default(true)

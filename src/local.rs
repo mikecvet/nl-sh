@@ -51,14 +51,10 @@ issue_local_llm_request (local_llm: &LLama, prompt: &str) -> Result<String, Box<
 fn
 extract_command (text: &str) -> Option<String> 
 {
-  if text.contains("```") {
-    let re = Regex::new(r"```[a-zA-Z]*\n([\s\S]*?)```").unwrap();
+  let re = Regex::new(r"```[a-zA-Z]*\n([\s\S]*?)```").unwrap();
 
-    if let Some(caps) = re.captures(text) {
-      caps.get(1).map(|matched| matched.as_str().trim().to_string())
-    } else {
-      Some(text.to_string())
-  }
+  if let Some(caps) = re.captures(text) {
+    caps.get(1).map(|matched| matched.as_str().trim().to_string())
   } else {
     Some(text.to_string())
   }

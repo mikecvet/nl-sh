@@ -105,9 +105,11 @@ build_command_prompt (context: &Context, arg: &str) -> String
     The underlying kernel details according to \"uname -smr\" is [{}] and operating system details include 
       [{}].
     The underlying shell is [{}]. The current working directory is [{}]. 
-    Respond only with the proper command-line details to satisfy the request, without any additional context or explanation. This command will be directly executed on this system.
-    The returned command and arguments must be a valid command on this operating system, since not all POSIX platforms have the same command or argument sets and syntax.
-    For example, on GNU/Linux `ps -aux` is valid, however on Mac OS Darwin the equivalent command is `ps aux`.
+    Respond only with the proper command-line details to satisfy the request, without any additional context or explanation. 
+    Be terse. This command will be directly executed on this system.
+    The returned command and arguments must be a valid command on this operating system, 
+    since not all POSIX platforms have the same command or argument sets and syntax.
+    For example, on GNU/Linux `ps -aux` is valid, however on Darwin OS the equivalent command is `ps aux`.
     If the prompt is already a valid POSIX command, then just return the original input.
     If the prompt is an incoherent request for a POSIX-style command, return an empty string.
     Here is the prompt: {}", context.uname, context.os, context.shell, context.pwd, arg
@@ -119,8 +121,8 @@ build_init_prompt (arg: &str) -> String
 {
   format!(
     "Given this output from the POSIX command `uname - smr`, provide the best next command to run within a shell to 
-    get specific details of the underlying operating system variant and version. Return only the command with no additional explanation or context. 
-    This should not be a script, but a simple command-line command which is directly executable. For example, on Mac OS, an appropriate command might be simply `sw_vers`.
+    get specific details of the underlying operating system variant and version. Return only the command with no additional explanation or context. Be terse.
+    This should not be a script, but a simple shell command which is directly executable. For example, on Darwin OS, an appropriate command might be simply `sw_vers`.
     Here is the uname output: {}", arg
   )
 }
