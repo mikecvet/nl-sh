@@ -55,12 +55,15 @@ In particular, I've had success with `Mistral 7B Instruct`, and `CodeLlama 7B`. 
   -rw-r--r--  1 mike  staff    82M Feb 13 09:08 2.log
   -rw-r--r--  1 mike  staff   163M Feb 13 09:08 3.log
 
-  > [nl-sh] /Users/mike/code/nl-sh $ Which 3 running processes on this machine have consumed the most CPU resources?
-  > ps -arx -o pid,ppid,%cpu,comm | head -n 4 Yes
-    PID  PPID  %CPU COMM
-    564     1  31.1 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer
-  17422     1  13.8 /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.WebContent.xpc/Contents/MacOS/com.apple.WebKit.WebContent
-   1295     1  10.0 /System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app/Contents/MacOS/Safari
+  > [nl-sh] /Users/mike/code/nl-sh $ Which 5 running processes on this machine have consumed the most CPU resources? Sanitize the process names by stripping out flags and pat
+  hs where possible. Order the results by descending CPU usage, and ensure their CPU usage is emitted as a column next to the process name
+  > ps aux | sort -nrk3 | head -5 | awk '{print $3, $11}' Yes
+  
+  4.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer
+  2.8 /Applications/Visual
+  2.4 /sbin/launchd
+  2.3 /System/Applications/Utilities/Activity
+  2.1 /Applications/Visual
 ```
 
 Now with a local model:
