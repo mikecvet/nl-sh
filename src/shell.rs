@@ -1,9 +1,8 @@
 use inquire::{Confirm, Text};
 use inquire::error::InquireError;
 use inquire::history::SimpleHistory;
-use std::io;
-use std::process::Command;
 
+pub use crate::command::*;
 pub use crate::context::*;
 pub use crate::model::*;
 
@@ -16,24 +15,6 @@ use mockall::{automock, predicate::*};
 static COMMAND_EXCEPTIONS: &[&str] = &["alias", "cat", "diff", "expand", "find", "kill", "link", 
   "list", "log", "print", "read", "sort", "split", "strip", "touch", "type", "what", "which", "who"];
 
-#[cfg_attr(test, automock)]
-trait CommandExecutorInterface {
-  fn execute(&self, shell: &str, command: &str) -> io::Result<bool>;
-}
-
-struct CommandExecutor;
-
-impl CommandExecutorInterface for CommandExecutor {
-  fn execute(&self, shell: &str, command: &str) -> io::Result<bool> {
-      std::process::Command::new(shell)
-        .arg("-c")
-        .arg(format!("command -v {}", command))
-        .output()
-        .map(|output| output.status.success())
-  }
-}
-
-
 /// Determine whether the input from the prompt is a likely system command. This is
 /// a best-effort attempt to short-circut requests to an LLM, to improve performance
 /// for the most obvious native command interpreted by the prompt.
@@ -42,7 +23,8 @@ impl CommandExecutorInterface for CommandExecutor {
 /// of COMMAND_EXCEPTIONS strings, fall through and indicate to pass the user input
 /// to the LLM to rationalize.
 fn 
-likely_system_command (context: &Context, command: &String, executor: &dyn CommandExecutorInterface) -> bool {
+likely_system_command (context: &Context, command: &String, executor: &dyn CommandExecutorInterface) -> bool 
+{
   let parts: Vec<&str> = command.split_whitespace().collect();
   let cmd = parts.get(0).unwrap_or(&"").to_lowercase(); // Extract the just command without arguments
 
@@ -52,7 +34,7 @@ likely_system_command (context: &Context, command: &String, executor: &dyn Comma
   } else {
     // Determine whether the first word in the user input is valid command on this system, 
     // via $SHELL command -v <cmd>
-    executor.execute(&context.shell, &cmd).unwrap_or(false)
+    executor.exists(&context.shell, command)
   }
 }
 
@@ -109,18 +91,12 @@ shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn 
 
         match confirm {
           Ok(true) => {
-            // Execute the command, by passing it to `$SHELL -c <command string>`
-            let output = Command::new(context.shell.clone()) // run in env shell
-              .arg("-c")
-              .arg(cmd.clone())
-              .output()
-              .expect("failed to execute command");
+            let output = executor.execute(&context.shell, &cmd)?;
 
-            if output.status.success() {
-              print!("\n{}", std::str::from_utf8(&output.stdout).expect("failed to convert stdout to String"));
+            if output.success {
+              print!("\n{}", output.stdout);
             } else {
-              println!("Executed [{}] and got error: {}", 
-                cmd, std::str::from_utf8(&output.stderr).expect("failed to convert stdout to String"));
+              println!("Executed [{}] and got error: {}", cmd, output.stderr);
             }
 
             // Update the context state based on the issued command
@@ -173,9 +149,9 @@ mod tests
   fn test_likely_system_command() 
   {
     let mut mock_executor = MockCommandExecutorInterface::new();
-    mock_executor.expect_execute()
+    mock_executor.expect_exists()
       .with(eq("/bin/zsh"), eq("ls"))
-      .returning(|_, _| Ok(true));
+      .returning(|_, _| true);
 
     let context = get_test_context();
 
@@ -186,9 +162,9 @@ mod tests
   fn test_not_likely_system_command() 
   {
     let mut mock_executor = MockCommandExecutorInterface::new();
-    mock_executor.expect_execute()
-      .with(eq("/bin/zsh"), eq("alias"))
-      .returning(|_, _| Ok(false));
+    mock_executor.expect_exists()
+      .with(eq("/bin/zsh"), eq("ls"))
+      .returning(|_, _| false);
 
     let context = get_test_context();
 
