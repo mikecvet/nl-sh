@@ -21,7 +21,7 @@ issue_local_llm_request (local_llm: &LLama, prompt: &str) -> Result<String, Box<
 
   match local_llm.predict(prompt.into(), options) {
     Ok(text) => {
-      Ok(extract_command(&text).unwrap_or("".to_string()))
+      Ok(extract_command(&text).unwrap_or("".to_string()).trim_matches('"').to_string())
     },
     e => e
   }

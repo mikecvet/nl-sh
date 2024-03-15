@@ -16,7 +16,7 @@ pub struct CommandOutput {
 /// standard output, and standard error output. `CommandOutput` resembles `process::Output` but also handles 
 /// byte-vector to UTF8 string conversion when accessing outputs.
 impl CommandOutput {
-  fn from (output: process::Output) -> io::Result<CommandOutput>
+  pub fn from (output: process::Output) -> io::Result<CommandOutput>
   {
     let stdout = std::str::from_utf8(&output.stdout);
     let stderr = std::str::from_utf8(&output.stderr);
@@ -38,8 +38,7 @@ impl CommandOutput {
   }
 
   /// Useful for testing.
-  #[cfg(test)]
-  fn from_fields (success: bool, status_code: i32, stdout: String, stderr: String) -> CommandOutput
+  pub fn from_fields (success: bool, status_code: i32, stdout: String, stderr: String) -> CommandOutput
   {
     CommandOutput {
       success: success,
@@ -67,11 +66,11 @@ impl CommandExecutorInterface for CommandExecutor {
   /// Which will return success (and a path to the command) if it exists; otherwise, or upon 
   /// error, returns false.
   fn 
-  exists(&self, shell: &str, command: &str) -> bool
+  exists (&self, shell: &str, command: &str) -> bool
   {
     match std::process::Command::new(shell)
       .arg("-c")
-      .arg(format!("command -v {}", command))
+      .arg(format!("command -v \"{}\"", command))
       .output()
       .map(|output| CommandOutput::from(output)) {
         Ok(output) => {
@@ -89,11 +88,11 @@ impl CommandExecutorInterface for CommandExecutor {
   /// 
   /// Returns the collected status code, stdout and stderr wrapped in a `CommandOutput` object
   fn 
-  execute(&self, shell: &str, command: &str) -> Result<CommandOutput, Error> 
+  execute (&self, shell: &str, command: &str) -> Result<CommandOutput, Error> 
   {
     std::process::Command::new(shell)
       .arg("-c")
-      .arg(command)
+      .arg(format!("{command}"))
       .output()
       .map(|output| CommandOutput::from(output))?
   }

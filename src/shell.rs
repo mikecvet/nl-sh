@@ -7,7 +7,7 @@ pub use crate::context::*;
 pub use crate::model::*;
 
 #[cfg(test)]
-use mockall::{automock, predicate::*};
+use mockall::predicate::*;
 
 /// Some POSIX commands have verb-y characteristics, and for these, we'll let the LLM determine
 /// whether the user intent is to run a specfic command, or whether the request is something
@@ -64,57 +64,76 @@ shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn 
         // If the input is a likely and unambiguous system command, we'll take the text as-is and exec it through the shell.
         // Otherwise, we'll pass the input to the model and let the LLM sort it out. If it is, in fact, a valid
         // command and argument, the model should return the input string.
-        let cmd = if likely_system_command(context, &input, &executor) {
+        let system_command = likely_system_command(context, &input, &executor);
+        let mut cmd = if system_command {
           input.clone() 
         } else {
           // Fetch input rationalization from the model
           model.ask_model(context, &input)?
         };
 
-        let confirm = if input.eq(&cmd) {
-          // If the input from the user is identical to the command to execute, just execute it without 
-          // asking for confirmation from the shell user.
-          Ok(true) 
-        } else if cmd.trim().is_empty() {
-          // If the command string is empty, this means the model didn't consider the input to be a sensible
-          // shell command.
-          println!("\ncould not interpret request");
-          continue;
-        } else {
-          print!("\n");
-          // Confirm with the user that they would like to execute the command
-          Confirm::new(&cmd)
-            .with_default(true)
-            .with_help_message("execute this command?")
-            .prompt()
-        };
-
-        match confirm {
-          Ok(true) => {
-            let output = executor.execute(&context.shell, &cmd)?;
-
-            if output.success {
-              print!("\n{}", output.stdout);
-            } else {
-              println!("Executed [{}] and got error: {}", cmd, output.stderr);
+        // The following runs in a simple loop, allowing for a single retry of a failed system command, by requesting a
+        // command correction from the model given context about the command objective and failure output.
+        for i in 0..2 {
+          let confirm = if input.eq(&cmd) {
+            // If the input from the user is identical to the command to execute, just execute it without 
+            // asking for confirmation from the shell user.
+            Ok(true) 
+          } else if cmd.trim().is_empty() {
+            // If the command string is empty, this means the model didn't consider the input to be a sensible
+            // shell command.
+            println!("\ncould not interpret request");
+            continue;
+          } else {
+            if i == 0 {
+              print!("\n");
             }
 
-            // Update the context state based on the issued command
-            context.update(&cmd)?
-          },
-          Ok(false) => {
-            println!("Aborting command")
-          },
-          Err(e) if matches!(e, InquireError::OperationCanceled) || matches!(e, InquireError::OperationInterrupted) => {
-            println!("exiting");
-            break Ok(());
-          },
-          Err(e) => {
-            println!("error: {}", e);
-            break Ok(());
+            // Confirm with the user that they would like to execute the command
+            Confirm::new(&cmd)
+              .with_default(true)
+              .with_help_message("execute this command?")
+              .prompt()
+          };
+
+          match confirm {
+            Ok(true) => {
+                // Execute the confirmed command string on the system
+                let output = executor.execute(&context.shell, &cmd)?;
+
+                if output.success {
+                  // If successful, emit the stdout captured by the command
+                  print!("success:\n{}", output.stdout);
+
+                  // Update the context state based on the issued command
+                  context.update(&cmd)?;
+                  break;
+                } else {
+                  println!("Executed [{}] and got error: {}", cmd, output.stderr);
+
+                  // If this wasn't a system command, then see if we can collect a correction from the model. If it /was/ a system command,
+                  // assume that the operator is trying to enter some complex commands themselves and don't bother trying to fetch corrections.
+                  if !system_command {
+                    cmd = model.attempt_correction(context, &input.as_str(), &cmd, &output)?;
+                  } else {
+                    break;
+                  }
+                }
+            },
+            Ok(false) => {
+              println!("Aborting command")
+            },
+            Err(e) if matches!(e, InquireError::OperationCanceled) || matches!(e, InquireError::OperationInterrupted) => {
+              println!("exiting");
+              return Ok(());
+            },
+            Err(e) => {
+              println!("error: {}", e);
+              return Ok(());
+            }
           }
-        }
-      }, // Ok(input)
+      }
+    }, // Ok(input)
     Err(e) if matches!(e, InquireError::OperationCanceled) || matches!(e, InquireError::OperationInterrupted) => {
       // This was a ^C or esc
       println!("exiting");
