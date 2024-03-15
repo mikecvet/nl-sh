@@ -66,7 +66,31 @@ In particular, I've had success with `Mistral 7B Instruct`, and `CodeLlama 7B`. 
   2.1 /Applications/Visual
 ```
 
-Now with a local model:
+`nl-sh` will also make an attempt to correct any failed commands based on a misunderstanding of the native system, or even user error, by collecting command outputs and reasoning about the failure. For example, on a Darwin UNIX system, the operator uses "iptables" as a shorthand for "firewall":
+
+```
+  > [nl-sh] /Users/mike/code/nl-sh $ list all iptables rules on this system
+  > sudo iptables -L -v Yes
+  Password:
+  Executed [sudo iptables -L -v] and got error: sudo: iptables: command not found
+
+  Retrying command formulation...
+  > sudo pfctl -sa Yes
+  success:
+  TRANSLATION RULES:
+  nat-anchor "com.apple/*" all
+  rdr-anchor "com.apple/*" all
+
+  FILTER RULES:
+  scrub-anchor "com.apple/*" all fragment reassemble
+  anchor "com.apple/*" all
+
+  DUMMYNET RULES:
+  dummynet-anchor "com.apple/*" all
+  [...]
+```
+
+Local LLMs work as well (though not quite as well as Anthropic or OpenAI's APIs):
 
 ```
   ~/code/nl-sh ~>> ./target/release/nl-sh --local ./mistral-7b-instruct-v0.2.Q8_0.gguf
