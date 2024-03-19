@@ -125,7 +125,8 @@ shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn 
                 }
             },
             Ok(false) => {
-              println!("Aborting command")
+              println!("Aborting command");
+              break
             },
             Err(e) if matches!(e, InquireError::OperationCanceled) || matches!(e, InquireError::OperationInterrupted) => {
               println!("exiting");
@@ -140,7 +141,7 @@ shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn 
     }, // Ok(input)
     Err(e) if matches!(e, InquireError::OperationCanceled) || matches!(e, InquireError::OperationInterrupted) => {
       // This was a ^C or esc
-      println!("exiting");
+      println!("\nexiting");
       break Ok(());
     },
     Err(e) => {
