@@ -4,6 +4,7 @@ use std::process::Command;
 
 use nl_sh::*;
 pub use crate::anthropic::*;
+pub use crate::args::*;
 pub use crate::context::*;
 pub use crate::local::*;
 pub use crate::model::*;
@@ -21,7 +22,10 @@ initialize_env_context (model: &Box<dyn Model>, stateless: bool) -> Result<Conte
     .expect("failed to execute command");
 
   let os = std::str::from_utf8(&uname_output.stdout).expect("failed to convert uname stdout to String");
-  let os_response = model.init_prompt(os)?;
+  let os_response = match model.init_prompt(os) {
+    Ok(response) => response,
+    Err(e) => panic!("Failed to initialize environment context due to model error: {e}")
+  };
 
   let mut args: Vec<String> = os_response.split_whitespace().map(String::from).collect();
   let os_command = args.remove(0);
@@ -29,7 +33,7 @@ initialize_env_context (model: &Box<dyn Model>, stateless: bool) -> Result<Conte
   let os_output = Command::new(os_command.clone())
     .args(&args)
     .output()
-    .expect(format!("failed to execute command: {} {:?}", os_command, args).as_str());
+    .expect(format!("failed to execute command: {os_command} {:?}", args).as_str());
 
   let shell_output = env::var("SHELL");
 
@@ -37,8 +41,11 @@ initialize_env_context (model: &Box<dyn Model>, stateless: bool) -> Result<Conte
     (true, Ok(shell)) => {
       Ok(Context::init(uname_output.stdout, &shell, os_output.stdout, stateless)?)
     },
+    (_, Err(e)) => {
+      panic!("failed to determine shell: {e}");
+    },
     (os_success, _) => {
-      panic!("failed to collect outputs {}", os_success);
+      panic!("failed to collect outputs {os_success}");
     }
   }
 }
@@ -46,7 +53,7 @@ initialize_env_context (model: &Box<dyn Model>, stateless: bool) -> Result<Conte
 fn main() -> Result<(), Box<dyn std::error::Error>> 
 {
   let matches = CommandArg::new("nl-sh")
-    .version("0.1")
+    .version("0.21")
     .about("A natural language shell for *NIX systems")
     .arg(Arg::new("gpt4")
       .long("gpt4")
@@ -73,26 +80,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>>
       .default_value("false")
       .help("Disable update of external shell history (default: false)"))
     .get_matches();
-  
-  let mut gpt4 = matches.get_one::<bool>("gpt4").map(|&b| b).unwrap_or(true);
-  let gpt35 = matches.get_one::<bool>("gpt35").map(|&b| b).unwrap_or(false);
-  let claude = matches.get_one::<bool>("claude").map(|&b| b).unwrap_or(false);
-  let local_opt = matches.get_one::<String>("local").cloned();
-  let stateless = matches.get_one::<bool>("stateless").map(|&b| b).unwrap_or(false);
 
-  if local_opt.is_some() || gpt35 || claude {
-    gpt4 = false;
-  }
-
-  let model: Box<dyn Model> = match (gpt4, gpt35, claude, local_opt) {
-    (true, _, _, _) => Box::new(GPT { version: gpt4_version(), client: open_ai_api_client() }),
-    (false, true, _, _) => Box::new(GPT { version: gpt35_version(), client: open_ai_api_client() }),
-    (false, false, true, _) => Box::new(Claude { version: claude_version(), client: anthropic_client() }),
-    (false, false, false, Some(path)) => Box::new(LocalLLM { local: local_llm(&path) }),
-    (false, false, false, None) => panic!("no model specified")
+  let args = Args::new(&matches);
+  let model: Box<dyn Model> = match args.model_type {
+    ModelType::GPT4 => Box::new(GPT { version: gpt4_version(), client: open_ai_api_client() }),
+    ModelType::GPT35 => Box::new(GPT { version: gpt35_version(), client: open_ai_api_client() }),
+    ModelType::Claude => Box::new(Claude { version: claude_version(), client: anthropic_client() }),
+    ModelType::Local(ref path) => Box::new(LocalLLM { local: local_llm(path) }),
   };
 
-  let mut context = initialize_env_context(&model, stateless)?;
+  let mut context = initialize_env_context(&model, args.stateless)?;
 
   shell_loop(&mut context, model)?;
   Ok(())

@@ -13,7 +13,10 @@ claude_version () -> String
 pub fn 
 anthropic_client () -> AnthropicClient
 {
-  ClientBuilder::default().api_key(env::var("ANTHROPIC_API_KEY").unwrap().to_string()).build().unwrap()
+  match env::var("ANTHROPIC_API_KEY") {
+    Ok(key) => ClientBuilder::default().api_key(key.to_string()).build().unwrap(),
+    Err(e) => panic!("ANTHROPIC_API_KEY must be set as an environment variable in order to issue requests to Anthropic APIs: {e}")
+  }
 }
 
 pub async fn
@@ -26,6 +29,12 @@ issue_anthropic_request (client: &AnthropicClient, model: String, prompt: &str) 
     .stream(false)
     .stop_sequences(vec![HUMAN_PROMPT.to_string()])
     .build()?;
-
-  client.complete(req).await
+  
+  match client.complete(req).await {
+    Ok(response) => Ok(response),
+    Err(e) => {
+      println!("Anthropic API error: {e}");
+      Err(e)
+    }
+  }
 }

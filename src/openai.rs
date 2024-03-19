@@ -19,7 +19,10 @@ gpt35_version () -> String
 pub fn
 open_ai_api_client () -> OpenAIClient
 {
-  OpenAIClient::new(env::var("OPENAI_API_KEY").unwrap().to_string())
+  match env::var("OPENAI_API_KEY") {
+    Ok(key) => OpenAIClient::new(key.to_string()),
+    Err(e) => panic!("OPENAI_API_KEY must be set as an environment variable in order to issue requests to OpenAI APIs: {e}")
+  }
 }
 
 pub fn
@@ -34,5 +37,11 @@ issue_open_ai_request (client: &OpenAIClient, model: String, prompt: &str) -> Re
     }],
   );
 
-  client.chat_completion(req)
+  match client.chat_completion(req) {
+    Ok(response) => Ok(response),
+    Err(e) => {
+      println!("OpenAI API error: {e}");
+      Err(e)
+    }
+  }
 }
