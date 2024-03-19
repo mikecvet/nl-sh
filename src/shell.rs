@@ -103,7 +103,7 @@ shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn 
 
                 if output.success {
                   // If successful, emit the stdout captured by the command
-                  print!("success:\n{}", output.stdout);
+                  print!("\n{}", output.stdout);
 
                   // Update the context state based on the issued command
                   context.update(&cmd)?;
