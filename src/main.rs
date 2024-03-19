@@ -1,6 +1,4 @@
 use clap::{Arg, ArgAction, Command as CommandArg};
-use std::env;
-use std::process::Command;
 
 use nl_sh::*;
 pub use crate::anthropic::*;
@@ -9,46 +7,6 @@ pub use crate::context::*;
 pub use crate::local::*;
 pub use crate::model::*;
 pub use crate::shell::*;
-
-/// Initializes this instance's `Context`, by issuing a preliminary request to the `Model` 
-/// asking for the best next command to gather local OS and environment information, given
-/// the content of a call to `uname`
-fn 
-initialize_env_context (model: &Box<dyn Model>, stateless: bool) -> Result<Context, Box<dyn std::error::Error>>
-{
-  let uname_output = Command::new("uname")
-    .args(&["-smr"])
-    .output()
-    .expect("failed to execute command");
-
-  let os = std::str::from_utf8(&uname_output.stdout).expect("failed to convert uname stdout to String");
-  let os_response = match model.init_prompt(os) {
-    Ok(response) => response,
-    Err(e) => panic!("Failed to initialize environment context due to model error: {e}")
-  };
-
-  let mut args: Vec<String> = os_response.split_whitespace().map(String::from).collect();
-  let os_command = args.remove(0);
-
-  let os_output = Command::new(os_command.clone())
-    .args(&args)
-    .output()
-    .expect(format!("failed to execute command: {os_command} {:?}", args).as_str());
-
-  let shell_output = env::var("SHELL");
-
-  match (os_output.status.success(), shell_output) {
-    (true, Ok(shell)) => {
-      Ok(Context::init(uname_output.stdout, &shell, os_output.stdout, stateless)?)
-    },
-    (_, Err(e)) => {
-      panic!("failed to determine shell: {e}");
-    },
-    (os_success, _) => {
-      panic!("failed to collect outputs {os_success}");
-    }
-  }
-}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> 
 {
@@ -89,8 +47,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>>
     ModelType::Local(ref path) => Box::new(LocalLLM { local: local_llm(path) }),
   };
 
-  let mut context = initialize_env_context(&model, args.stateless)?;
+  let executor = CommandExecutor {};
+  let mut context = Context::init(&args, &executor, model.as_ref())?;
 
-  shell_loop(&mut context, model)?;
+  shell_loop(&mut context, model, &executor)?;
   Ok(())
 }

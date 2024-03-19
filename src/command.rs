@@ -103,7 +103,7 @@ mod tests {
   use super::*;
 
   #[test]
-  fn test_command_exists() {
+  fn test_command_exists () {
     let mut mock_executor = MockCommandExecutorInterface::new();
     mock_executor.expect_exists()
       .with(eq("/bin/bash"), eq("echo"))
@@ -113,7 +113,7 @@ mod tests {
   }
 
   #[test]
-  fn test_command_execute() {
+  fn test_command_execute () {
     let mut mock_executor = MockCommandExecutorInterface::new();
     let command_output = CommandOutput::from_fields(true, 0, "Hello".to_string(), "".to_string());
     mock_executor.expect_execute()
@@ -123,6 +123,6 @@ mod tests {
     match mock_executor.execute("/bin/bash", "echo Hello") {
       Ok(output) => assert_eq!(output.stdout, "Hello"),
       Err(_) => panic!("Execution should succeed"),
-  }
+    }
   }
 }

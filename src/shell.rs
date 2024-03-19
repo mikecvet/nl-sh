@@ -41,10 +41,8 @@ likely_system_command (context: &Context, command: &String, executor: &dyn Comma
 /// Main shell UI loop. Collects input from the user, conditionally consults LLMs depending on the user prompt, executes
 /// subsequent commands and updates shell state.
 pub fn
-shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn std::error::Error>>
+shell_loop (context: &mut Context, model: Box<dyn Model>, executor: &dyn CommandExecutorInterface) -> Result<(), Box<dyn std::error::Error>>
 {
-  let executor = CommandExecutor {};
-
   loop {
     // Define the prompt prefix string, something like
     // [nl-sh] /Users/mike $
@@ -64,7 +62,7 @@ shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn 
         // If the input is a likely and unambiguous system command, we'll take the text as-is and exec it through the shell.
         // Otherwise, we'll pass the input to the model and let the LLM sort it out. If it is, in fact, a valid
         // command and argument, the model should return the input string.
-        let system_command = likely_system_command(context, &input, &executor);
+        let system_command = likely_system_command(context, &input, executor);
         let mut cmd = if system_command {
           input.clone() 
         } else {
@@ -126,7 +124,7 @@ shell_loop (context: &mut Context, model: Box<dyn Model>) -> Result<(), Box<dyn 
             },
             Ok(false) => {
               println!("Aborting command");
-              break
+              break;
             },
             Err(e) if matches!(e, InquireError::OperationCanceled) || matches!(e, InquireError::OperationInterrupted) => {
               println!("exiting");
@@ -157,8 +155,7 @@ mod tests
 {
   use super::*;
 
-  fn
-  get_test_context() -> Context 
+  fn get_test_context () -> Context 
   {
     Context {
       uname: "Darwin".to_string(),
@@ -170,7 +167,7 @@ mod tests
   }
 
   #[test]
-  fn test_likely_system_command() 
+  fn test_likely_system_command () 
   {
     let mut mock_executor = MockCommandExecutorInterface::new();
     mock_executor.expect_exists()
@@ -183,7 +180,7 @@ mod tests
   }
 
   #[test]
-  fn test_not_likely_system_command() 
+  fn test_not_likely_system_command () 
   {
     let mut mock_executor = MockCommandExecutorInterface::new();
     mock_executor.expect_exists()

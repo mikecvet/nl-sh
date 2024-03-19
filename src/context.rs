@@ -2,7 +2,9 @@ use regex::Regex;
 use std::env;
 use std::io::{self, Error};
 
+use crate::args::Args;
 pub use crate::command_history::*;
+use crate::shell::{CommandExecutorInterface, Model};
 
 /// Context about the environment in which this shell is being run. 
 pub struct Context {
@@ -34,16 +36,37 @@ sanitize_stdout (stdout: &str) -> String
 
 impl Context 
 {
+  /// Initializes a `Context` by issuing a preliminary request to the `Model` 
+  /// asking for the best next command to gather local OS and environment information, given
+  /// the content of a call to `uname`
   pub fn 
-  init (uname: Vec<u8>, shell: &str, os: Vec<u8>, stateless: bool) -> io::Result<Context> 
+  init (args: &Args, executor: &dyn CommandExecutorInterface, model: &dyn Model) -> io::Result<Context> 
   {
-    Ok(Context {
-      uname: sanitize_stdout(std::str::from_utf8(&uname).expect("failed to convert stdout to String")),
-      shell: shell.to_string(),
-      os: sanitize_stdout(std::str::from_utf8(&os).expect("failed to convert stdout to String")),
-      pwd: get_current_working_dir().unwrap(),
-      history: CommandHistory::init(shell, !stateless)?
-    })
+    let shell_path = match env::var("SHELL") {
+      Ok(shell_path) => shell_path,
+      Err(e) => panic!("failed to determine shell: {e}")
+    };
+  
+    let uname_output = executor.execute(shell_path.as_str(), "uname")?;
+  
+    let os = &uname_output.stdout;
+    let os_command = match model.init_prompt(os) {
+      Ok(response) => response,
+      Err(e) => panic!("Failed to initialize environment context due to model error: {e}")
+    };
+  
+    let os_output = executor.execute(shell_path.as_str(), os_command.clone().as_str())?;
+    if os_output.success {
+      Ok(Context {
+        uname: sanitize_stdout(&os),
+        shell: shell_path.clone(),
+        os: sanitize_stdout(&os_output.stdout),
+        pwd: get_current_working_dir().unwrap(),
+        history: CommandHistory::init(shell_path.as_str(), !args.stateless)?
+      })
+    } else {
+      panic!("failed to collect {os_command} outputs: {}", os_output.stderr);
+    }
   }
 
   /// Conditionally updates the given `Context`, depending on the nature of the sucessfullly-executed command string.
