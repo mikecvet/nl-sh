@@ -15,7 +15,7 @@ This is discussed a little further [here](https://mikecvet.medium.com/nl-sh-the-
 - Loads prior shell history (bash, ksh, tcsh, zsh), allows history navigation and updates underlying shell history with executed commands
 - Supports `GPT 3.5 Turbo`, `GPT 4`, `Claude 2.1`, and any locally-available open-source `GGUF` formatted LLM
 
-In particular, I've had success with `Mistral 7B Instruct`, and `CodeLlama 7B`. Some other OS models, such as raw `Llama2` do not work as well; often because they're a little too chatty and helpful =)
+I've had some success with `Mistral 7B Instruct`, and `CodeLlama 7B`, though they do not work as well as Claude or OpenAI's models. Some other open-source models, such as `Llama2` do not work as well at all; often because they're a little too chatty and helpful =)
 
 `nl-sh` is best demonstrated with some examples (default behavior is to use GPT4 and assume `OPENAI_API_KEY` is available):
 
@@ -66,6 +66,7 @@ In particular, I've had success with `Mistral 7B Instruct`, and `CodeLlama 7B`. 
   2.1 /Applications/Visual
 ```
 
+
 `nl-sh` will also make an attempt to correct any failed commands based on a misunderstanding of the native system, or even user error, by collecting command outputs and reasoning about the failure. For example, on a Darwin UNIX system, the operator uses "iptables" as a shorthand for "firewall":
 
 ```
@@ -90,7 +91,7 @@ In particular, I've had success with `Mistral 7B Instruct`, and `CodeLlama 7B`. 
   [...]
 ```
 
-Local LLMs work as well (though not quite as well as Anthropic or OpenAI's APIs):
+Local LLMs sometimes work as well:
 
 ```
   ~/code/nl-sh ~>> ./target/release/nl-sh --local ./mistral-7b-instruct-v0.2.Q8_0.gguf
@@ -104,6 +105,10 @@ Local LLMs work as well (though not quite as well as Anthropic or OpenAI's APIs)
 Here's a video demonstration:
 
 ![nl-sh](https://github.com/mikecvet/nl-sh/assets/275631/685f4642-f331-4ac8-8e3e-b6d95c3b4d6f)
+
+Another demonstrating automatic command reformulation upon error:
+
+![nl-sh](https://github.com/mikecvet/nl-sh/assets/275631/f852c67e-c04c-4b08-8ccd-355b8ef70c61)
 
 ## How does this work?
 
