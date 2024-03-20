@@ -5,12 +5,9 @@ use regex::Regex;
 pub fn 
 local_llm (model_path: &str) -> LLama
 {
-  let mut model_options = ModelOptions::default();
-  model_options.set_gpu_layers(1);
-
   LLama::new(
     model_path.into(),
-    &model_options,
+    &ModelOptions::default(),
   ).unwrap()
 }
 

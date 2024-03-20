@@ -47,9 +47,9 @@ impl Context
       Err(e) => panic!("failed to determine shell: {e}")
     };
   
-    let uname_output = executor.execute(shell_path.as_str(), "uname")?;
+    let uname_output = executor.execute(shell_path.as_str(), "uname -smr")?;
   
-    let os = &uname_output.stdout;
+    let os = &sanitize_stdout(uname_output.stdout.as_str());
     let os_command = match model.init_prompt(os) {
       Ok(response) => response,
       Err(e) => panic!("Failed to initialize environment context due to model error: {e}")

@@ -34,7 +34,7 @@ likely_system_command (context: &Context, command: &String, executor: &dyn Comma
   } else {
     // Determine whether the first word in the user input is valid command on this system, 
     // via $SHELL command -v <cmd>
-    executor.exists(&context.shell, command)
+    executor.exists(&context.shell, &cmd)
   }
 }
 
@@ -108,17 +108,9 @@ shell_loop (context: &mut Context, model: Box<dyn Model>, executor: &dyn Command
                   break;
                 } else {
                   println!("Executed [{}] and got error: {}", cmd, output.stderr);
-
-                  // If this wasn't a system command, then see if we can collect a correction from the model. If it /was/ a system command,
-                  // assume that the operator is trying to enter some complex commands themselves and don't bother trying to fetch corrections.
-                  if !system_command {
-                    if i == 0 {
-                      println!("Retrying command formulation...");
-                    }
-
+                  if i == 0 {
+                    println!("Retrying command formulation...");
                     cmd = model.attempt_correction(context, &input.as_str(), &cmd, &output)?;
-                  } else {
-                    break;
                   }
                 }
             },

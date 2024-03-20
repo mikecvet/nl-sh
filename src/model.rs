@@ -72,8 +72,7 @@ impl GPT {
 impl Model for LocalLLM {
   fn 
   init_prompt (&self, input: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let s = issue_local_llm_request(&self.local, &build_init_prompt(input))?;
-    Ok(s)
+    issue_local_llm_request(&self.local, &build_init_prompt(input))
   }
 
   fn 
@@ -120,32 +119,46 @@ impl Claude {
 }
 
 fn 
-build_command_prompt (context: &Context, arg: &str) -> String 
+build_init_prompt (arg: &str) -> String 
 {
   format!(
-    "Output the command-line arguments to satisfy the following prompt. 
-    The underlying kernel details according to \"uname -smr\" is [{}] and operating system details include 
-      [{}].
-    The underlying shell is [{}]. The current working directory is [{}]. 
-    Respond only with the proper command-line details to satisfy the request, without any additional context or explanation. 
-    Be terse. This command will be directly executed on this system.
-    The returned command and arguments must be a valid command on this operating system, 
-    since not all POSIX platforms have the same command or argument sets and syntax.
-    For example, on GNU/Linux `ps -aux` is valid, however on Darwin OS the equivalent command is `ps aux`.
-    If the prompt is already a valid POSIX command, then just return the original input.
-    If the prompt is an incoherent request for a POSIX-style command, return an empty string.
-    Here is the prompt: \"{}\"", context.uname, context.os, context.shell, context.pwd, arg
+    "You are being asked to provide a POSIX-compatible command line sequence to gather information about the underlying operating system variant and version.
+    The underlying details according to the command \"uname -smr\" include:
+      \"{arg}\"
+    Respond only the specific command-line details to satisfy the request, with no additional context or explanation. Be terse and exact.
+    Since commands differ on various *NIX systems, ensure the command is valid in the environment detailed above.
+    For example: 
+      On a Darwin UNIX system, an appropriate command might be \"sw_vers\". 
+      On a GNU/Linux system, the right command might be \"hostnamectl\" or \"cat /etc/os-release\".
+    Provide the command."
   )
 }
 
 fn 
-build_init_prompt (arg: &str) -> String 
+build_command_prompt (context: &Context, arg: &str) -> String 
 {
   format!(
-    "Given this output from the POSIX command `uname - smr`, provide the best next command to run within a shell to 
-    get specific details of the underlying operating system variant and version. Return only the command with no additional explanation or context. Be terse.
-    This should not be a script, but a simple shell command which is directly executable. For example, on Darwin OS, an appropriate command might be simply `sw_vers`.
-    Here is the uname output: {}", arg
+    "You are being asked to provide a POSIX-compatible command line sequence to satisfy a user's prompt.
+    The command line arguments should be compatible with the user's operating system.
+    The underlying kernel and system details according to \"uname -smr\" includes \"{}\"
+    Further operating systems details include \"{}\"
+    The user's underlying shell is \"{}\"
+    The user's current working directory according to \"pwd\" is \"{}\"
+    Respond only with the specific command-line details to satisfy the request, with no additional context or explanation. Be terse and exact.
+    Since commands differ on various *NIX systems, ensure the command is valid in the environment detailed above.
+    Here are a few examples, on a Darwin-based UNIX system:
+      User: \"Show me deteails about all running processes on this system\"
+        Your response: \"ps aux\"
+      User: \"Show me all files in the current directory with human-readable file sizes and permission details\"
+        Your response: \"ls -lha\"
+      User: \"Show me a summary of Mike's commits in this git repository; show line additions and subtractions to each file in each commit\"
+        Your response: \"git log --stat --summary --author='Mike'\"
+    If the prompt is already a valid *NIX command for the user's system, then just return the original input.
+    If the prompt is an incoherent request for a POSIX-style command, return an empty string.
+    If the prompt is a command sequence for a different *NIX system, return the right combination of commands and flags to satisfy the request on the current system.
+    If the user's intention requires superuser priviledges, ensure to prefix the command with 'sudo' or an appropriate equivalent given the operating system.
+    Here is the user's prompt: 
+      \"{arg}\"", context.uname, context.os, context.shell, context.pwd
   )
 }
 
@@ -157,7 +170,8 @@ build_correction_prompt (context: &Context, arg: &str, command: &str, output: &C
     {}
     \nThis resulted in the following proposed command: {}
     Executing that proposal on this system resulted in failure, with this status code: \"{}\" and this stderr output: \"{}\"
-    Given that, suggest an updated command given the constraints of this system's environment. Follow all earlier instructions; specifically, emit only the command with no additional context or explanation", 
+    Given that, suggest an updated command given the constraints of this system's stated environment and the intent of the user. 
+    Follow all earlier instructions; specifically, emit only the command with no additional context or explanation", 
       build_command_prompt(context, arg),
       command,
       output.status_code, output.stderr
