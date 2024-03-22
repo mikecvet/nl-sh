@@ -20,17 +20,17 @@ I've had some success with `Mistral 7B Instruct`, and `CodeLlama 7B`, though the
 `nl-sh` is best demonstrated with some examples (default behavior is to use GPT4 and assume `OPENAI_API_KEY` is available):
 
 ```
-  ~/code/nl-sh ~>> ./target/release/nl-sh --help 
+  ~/code/nl-sh ~>> ./target/release/nl-sh --help
   A natural language shell for *NIX systems
-
+  
   Usage: nl-sh [OPTIONS]
-
+  
   Options:
-      --gpt4          Use the GPT4 API as a backend, reading from the OPENAI_API_KEY environment variable. Default behavior.
-      --gpt35         Use the GPT3.5 Turbo API as a backend, reading from the OPENAI_API_KEY environment variable
-      --claude        Use the Anthropic Claude API as a backend, reading from the CLAUDE_API_KEY environment variable
-      --local <path>  Use a local GGUF-based model as a backend, located at the provided path
-      --stateless     Disable update of external shell history (default: false)
+        --gpt4          Use the GPT4 API as a backend, reading from the OPENAI_API_KEY environment variable. Default behavior.
+        --gpt35         Use the GPT3.5 Turbo API as a backend, reading from the OPENAI_API_KEY environment variable
+        --claude        Use the Anthropic Claude API as a backend (default: Claude 3 Sonnet), reading from the CLAUDE_API_KEY environment variable
+        --local <path>  Use a local GGUF-based model as a backend, located at the provided path
+        --stateless     Disable update of external shell history (default: false)
 
   ~/code/nl-sh ~>> ./target/release/nl-sh 
   > [nl-sh] /Users/mike/code/nl-sh $ whoami
