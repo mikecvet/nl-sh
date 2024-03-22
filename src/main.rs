@@ -11,7 +11,7 @@ pub use crate::shell::*;
 fn main() -> Result<(), Box<dyn std::error::Error>> 
 {
   let matches = CommandArg::new("nl-sh")
-    .version("0.21")
+    .version("0.22")
     .about("A natural language shell for *NIX systems")
     .arg(Arg::new("gpt4")
       .long("gpt4")
