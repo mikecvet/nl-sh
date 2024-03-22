@@ -65,8 +65,7 @@ impl CommandExecutorInterface for CommandExecutor {
   /// 
   /// Which will return success (and a path to the command) if it exists; otherwise, or upon 
   /// error, returns false.
-  fn 
-  exists (&self, shell: &str, command: &str) -> bool
+  fn exists (&self, shell: &str, command: &str) -> bool
   {
     match std::process::Command::new(shell)
       .arg("-c")
@@ -87,8 +86,7 @@ impl CommandExecutorInterface for CommandExecutor {
   ///   $ `$SHELL -c <command string>`
   /// 
   /// Returns the collected status code, stdout and stderr wrapped in a `CommandOutput` object
-  fn 
-  execute (&self, shell: &str, command: &str) -> Result<CommandOutput, Error> 
+  fn execute (&self, shell: &str, command: &str) -> Result<CommandOutput, Error> 
   {
     std::process::Command::new(shell)
       .arg("-c")

@@ -1,5 +1,4 @@
 use clust::messages::ClaudeModel;
-use clust::messages::TextContentBlock;
 use clust::Client as AnthropicClient;
 use llama_cpp_rs::LLama;
 use openai_api_rs::v1::api::Client as OpenAIClient;
@@ -11,128 +10,104 @@ pub use crate::context::*;
 pub use crate::local::*;
 pub use crate::openai::*;
 
+/// A `Model` is a shell-facing abstraction hiding either local or remote language model details behind a simple API
 pub trait Model {
-  /// Used strictly for initialization of local context with information used to construct a better command query
+  /// Used strictly for initialization of local context with information used to construct a better command query. Builds local state around
+  /// operating system, versions, kernel information and other data to better inform responses for command queries.
   fn init_prompt (&self, input: &str) -> Result<String, Box<dyn std::error::Error>>;
 
-  /// Main query interface; uses the command prompt to collect NIX commands given the user string
+  /// Main query interface; uses the command prompt to collect *NIX commands given the user's input prompt
   fn ask_model (&self, context: &Context, input: &str) -> Result<String, Box<dyn std::error::Error>>;
 
   /// A previously-suggested command failed. Provide the failure context back to the model and attempt a correction to the command
   fn attempt_correction (&self, context: &Context, input: &str, command: &str, output: &CommandOutput) -> Result<String, Box<dyn std::error::Error>>;
 }
 
+/// OpenAI model variants
 pub struct GPT {
   pub version: String,
   pub client: OpenAIClient
 }
 
-pub struct LocalLLM {
-  pub local: LLama
-}
-
+/// Anthropic model variants
 pub struct Claude {
   pub version: ClaudeModel,
   pub client: AnthropicClient
 }
 
-/// Constructs a prompt given current environment context, and issues a requet to OpenAI's GPT4 via their API client.
+/// Local / Open-Source model variants
+pub struct LocalLLM {
+  pub local: LLama
+}
+
+/// Constructs a prompt given current environment context, and issues a request to one of OpenAI's GPT models via their API
 impl Model for GPT {
-  fn
-  init_prompt (&self, input: &str) -> Result<String, Box<dyn std::error::Error>>
+  fn init_prompt (&self, input: &str) -> Result<String, Box<dyn std::error::Error>>
   {
     self.request(&build_init_prompt(input))
   }
 
-  fn
-  ask_model (&self, context: &Context, input: &str) -> Result<String, Box<dyn std::error::Error>>
+  fn ask_model (&self, context: &Context, input: &str) -> Result<String, Box<dyn std::error::Error>>
   {
     self.request(&build_command_prompt(context, input))
   }
 
-  fn 
-  attempt_correction (&self, context: &Context, input: &str, command: &str, output: &CommandOutput) -> Result<String, Box<dyn std::error::Error>>
+  fn attempt_correction (&self, context: &Context, input: &str, command: &str, output: &CommandOutput) -> Result<String, Box<dyn std::error::Error>>
   {
     self.request(&build_correction_prompt(context, input, command, output))
   }
 }
 
 impl GPT {
-  fn 
-  request (&self, prompt: &str) -> Result<String, Box<dyn std::error::Error>> 
+  fn request (&self, prompt: &str) -> Result<String, Box<dyn std::error::Error>>
   {
-    let result = issue_open_ai_request(&self.client, self.version.clone(), prompt)?;
-
-    match result.choices[0].message.content.clone() {
-      Some(message) => Ok(message.trim_matches('"').to_string()),
-      _ => Ok("".to_string())
-    }
+    issue_open_ai_request(&self.client, self.version.clone(), prompt)
   }
 }
 
-/// Constructs a prompt given current environment context, and issues a requet to a local Llama model
+/// Constructs a prompt given current environment context, and issues a request to a local Llama model
 impl Model for LocalLLM {
-  fn 
-  init_prompt (&self, input: &str) -> Result<String, Box<dyn std::error::Error>> {
+  fn init_prompt (&self, input: &str) -> Result<String, Box<dyn std::error::Error>> 
+  {
     issue_local_llm_request(&self.local, &build_init_prompt(input))
   }
 
-  fn 
-  ask_model (&self, context: &Context, input: &str) -> Result<String, Box<dyn std::error::Error>> {
+  fn ask_model (&self, context: &Context, input: &str) -> Result<String, Box<dyn std::error::Error>> 
+  {
     issue_local_llm_request(&self.local, &build_command_prompt(context, input))
   }
 
-  fn 
-  attempt_correction (&self, context: &Context, input: &str, command: &str, output: &CommandOutput) -> Result<String, Box<dyn std::error::Error>>
+  fn attempt_correction (&self, context: &Context, input: &str, command: &str, output: &CommandOutput) -> Result<String, Box<dyn std::error::Error>>
   {
     issue_local_llm_request(&self.local, &build_correction_prompt(context, input, command, output))
   }
 }
 
+/// Constructs a prompt given current environment context, and issues a request to one of Anthropic's Claude models via their API
 impl Model for Claude {
-  fn
-  init_prompt (&self, input: &str) -> Result<String, Box<dyn std::error::Error>>
+  fn init_prompt (&self, input: &str) -> Result<String, Box<dyn std::error::Error>>
   {
     self.request(&build_init_prompt(input))
   }
 
-  fn
-  ask_model (&self, context: &Context, input: &str) -> Result<String, Box<dyn std::error::Error>>
+  fn ask_model (&self, context: &Context, input: &str) -> Result<String, Box<dyn std::error::Error>>
   {
     self.request(&build_command_prompt(context, input))
   }
 
-  fn 
-  attempt_correction (&self, context: &Context, input: &str, command: &str, output: &CommandOutput) -> Result<String, Box<dyn std::error::Error>>
+  fn attempt_correction (&self, context: &Context, input: &str, command: &str, output: &CommandOutput) -> Result<String, Box<dyn std::error::Error>>
   {
     self.request(&build_correction_prompt(context, input, command, output))
   }
 }
 
 impl Claude {
-  fn 
-  request (&self, prompt: &str) -> Result<String, Box<dyn std::error::Error>> 
+  fn request (&self, prompt: &str) -> Result<String, Box<dyn std::error::Error>> 
   {
-    match Runtime::new()?.block_on(issue_anthropic_request(&self.client, self.version.clone(), prompt)) {
-      Ok(response) => {
-        let response_vec: Vec<clust::messages::ContentBlock> = match response.content {
-          clust::messages::Content::MultipleBlock(b) => b,
-          _ => vec![]
-        };
-
-        let mut s = "".to_string();
-
-        if !response_vec.is_empty() {
-          s = match response_vec[0].clone() {
-            clust::messages::ContentBlock::Text(TextContentBlock { _type, text }) => text,
-            _ => "".to_string()
-          };
-        }
-        
-        Ok(s)
-      },
-      Err(e) => Err(Box::new(e))
-    }
+    Runtime::new()?
+      .block_on(
+        issue_anthropic_request(&self.client, self.version.clone(), prompt)
+      )
   }
 }
 

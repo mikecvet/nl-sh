@@ -39,8 +39,7 @@ impl Context
   /// Initializes a `Context` by issuing a preliminary request to the `Model` 
   /// asking for the best next command to gather local OS and environment information, given
   /// the content of a call to `uname`
-  pub fn 
-  init (args: &Args, executor: &dyn CommandExecutorInterface, model: &dyn Model) -> io::Result<Context> 
+  pub fn init (args: &Args, executor: &dyn CommandExecutorInterface, model: &dyn Model) -> io::Result<Context> 
   {
     let shell_path = match env::var("SHELL") {
       Ok(shell_path) => shell_path,
@@ -70,8 +69,7 @@ impl Context
   }
 
   /// Conditionally updates the given `Context`, depending on the nature of the sucessfullly-executed command string.
-  pub fn
-  update (&mut self, cmd_input: &str) -> Result<(), Box<dyn std::error::Error>>
+  pub fn update (&mut self, cmd_input: &str) -> Result<(), Box<dyn std::error::Error>>
   {
     let mut parts: Vec<&str> = cmd_input.split_whitespace().collect();
     let cmd = parts.remove(0);
@@ -89,14 +87,12 @@ impl Context
     Ok(())
   }
 
-  pub fn 
-  update_command (&mut self, cmd: &str) -> io::Result<()>
+  pub fn update_command (&mut self, cmd: &str) -> io::Result<()>
   {
     self.history.maybe_append_command(cmd)
   }
 
-  pub fn 
-  get_command_history (&self) -> Vec<String>
+  pub fn get_command_history (&self) -> Vec<String>
   {
     self.history.get_history()
   }

@@ -10,8 +10,7 @@ pub struct CommandHistory {
 }
 
 impl CommandHistory {
-  pub fn 
-  init (shell: &str, write_updates: bool) -> io::Result<Self>
+  pub fn init (shell: &str, write_updates: bool) -> io::Result<Self>
   {
     let mut enable_write_updates = write_updates;
 
@@ -48,8 +47,7 @@ impl CommandHistory {
     })
   }
 
-  pub fn 
-  get_history (&self) -> Vec<String> {
+  pub fn get_history (&self) -> Vec<String> {
     Vec::from(self.command_history.clone())
   }
 

@@ -1,7 +1,6 @@
 use openai_api_rs::v1::api::Client as OpenAIClient;
-use openai_api_rs::v1::chat_completion::{self, ChatCompletionRequest, ChatCompletionResponse};
+use openai_api_rs::v1::chat_completion::{self, ChatCompletionRequest};
 use openai_api_rs::v1::common::{GPT3_5_TURBO, GPT4};
-use openai_api_rs::v1::error::APIError;
 use std::env;
 
 pub fn
@@ -26,7 +25,7 @@ open_ai_api_client () -> OpenAIClient
 }
 
 pub fn
-issue_open_ai_request (client: &OpenAIClient, model: String, prompt: &str) -> Result<ChatCompletionResponse, APIError>
+issue_open_ai_request (client: &OpenAIClient, model: String, prompt: &str) -> Result<String, Box<dyn std::error::Error>>
 {
   let req = ChatCompletionRequest::new(
     model,
@@ -37,11 +36,9 @@ issue_open_ai_request (client: &OpenAIClient, model: String, prompt: &str) -> Re
     }],
   );
 
-  match client.chat_completion(req) {
-    Ok(response) => Ok(response),
-    Err(e) => {
-      println!("OpenAI API error: {e}");
-      Err(e)
-    }
+  let response = client.chat_completion(req)?;
+  match response.choices[0].message.content.clone() {
+    Some(message) => Ok(message.trim_matches('"').to_string()),
+    _ => Ok("".to_string())
   }
 }

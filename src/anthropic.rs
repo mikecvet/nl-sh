@@ -27,7 +27,7 @@ anthropic_client () -> AnthropicClient
 }
 
 pub async fn
-issue_anthropic_request (client: &AnthropicClient, model: ClaudeModel, prompt: &str) -> MessagesResult<MessagesResponseBody>
+issue_anthropic_request (client: &AnthropicClient, model: ClaudeModel, prompt: &str) -> Result<String, Box<dyn std::error::Error>>
 {
   let messages = vec![Message::user(prompt)];
   let max_tokens = MaxTokens::default();
@@ -38,7 +38,23 @@ issue_anthropic_request (client: &AnthropicClient, model: ClaudeModel, prompt: &
     ..Default::default()
   };
 
-  client
+  let response = client
     .create_a_message(request_body)
-    .await
+    .await?;
+
+    let s = match response.content {
+      Content::MultipleBlock(response_vector) => {
+        if !response_vector.is_empty() {
+          match response_vector[0].clone() {
+            clust::messages::ContentBlock::Text(TextContentBlock { _type, text }) => text,
+            _ => "".to_string()
+          }
+        } else {
+          "".to_string()
+        }
+      },
+      Content::SingleText(text) => text
+    };
+
+    Ok(s)
 }
