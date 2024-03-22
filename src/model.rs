@@ -1,4 +1,6 @@
-use anthropic::client::Client as AnthropicClient;
+use clust::messages::ClaudeModel;
+use clust::messages::TextContentBlock;
+use clust::Client as AnthropicClient;
 use llama_cpp_rs::LLama;
 use openai_api_rs::v1::api::Client as OpenAIClient;
 use tokio::runtime::Runtime;
@@ -30,7 +32,7 @@ pub struct LocalLLM {
 }
 
 pub struct Claude {
-  pub version: String,
+  pub version: ClaudeModel,
   pub client: AnthropicClient
 }
 
@@ -112,7 +114,23 @@ impl Claude {
   request (&self, prompt: &str) -> Result<String, Box<dyn std::error::Error>> 
   {
     match Runtime::new()?.block_on(issue_anthropic_request(&self.client, self.version.clone(), prompt)) {
-      Ok(response) => Ok(response.completion.trim_matches('"').to_string()),
+      Ok(response) => {
+        let response_vec: Vec<clust::messages::ContentBlock> = match response.content {
+          clust::messages::Content::MultipleBlock(b) => b,
+          _ => vec![]
+        };
+
+        let mut s = "".to_string();
+
+        if !response_vec.is_empty() {
+          s = match response_vec[0].clone() {
+            clust::messages::ContentBlock::Text(TextContentBlock { _type, text }) => text,
+            _ => "".to_string()
+          };
+        }
+        
+        Ok(s)
+      },
       Err(e) => Err(Box::new(e))
     }
   }

@@ -1,40 +1,44 @@
-use anthropic::client::{Client as AnthropicClient, ClientBuilder};
-use anthropic::error::AnthropicError;
-use anthropic::types::{CompleteRequestBuilder, CompleteResponse};
-use anthropic::{AI_PROMPT, HUMAN_PROMPT};
-use std::env;
+use clust::Client as AnthropicClient;
+use clust::messages::*;
 
 pub fn 
-claude_version () -> String
+claude_3_haiku () -> ClaudeModel
 {
-  "claude-2.1".to_string()
+  ClaudeModel::Claude3Haiku20240307
+}
+
+pub fn 
+claude_3_sonnet () -> ClaudeModel
+{
+  ClaudeModel::Claude3Sonnet20240229
+}
+
+pub fn 
+claude_3_opus () -> ClaudeModel
+{
+  ClaudeModel::Claude3Opus20240229
 }
 
 pub fn 
 anthropic_client () -> AnthropicClient
 {
-  match env::var("ANTHROPIC_API_KEY") {
-    Ok(key) => ClientBuilder::default().api_key(key.to_string()).build().unwrap(),
-    Err(e) => panic!("ANTHROPIC_API_KEY must be set as an environment variable in order to issue requests to Anthropic APIs: {e}")
-  }
+  // Expects ANTHROPIC_API_KEY to be set in environment
+  AnthropicClient::from_env().unwrap()
 }
 
 pub async fn
-issue_anthropic_request (client: &AnthropicClient, model: String, prompt: &str) -> Result<CompleteResponse, AnthropicError>
+issue_anthropic_request (client: &AnthropicClient, model: ClaudeModel, prompt: &str) -> MessagesResult<MessagesResponseBody>
 {
-  let req = CompleteRequestBuilder::default()
-    .prompt(format!("{HUMAN_PROMPT}{prompt}{AI_PROMPT}"))
-    .model(model)
-    .max_tokens_to_sample(256usize)
-    .stream(false)
-    .stop_sequences(vec![HUMAN_PROMPT.to_string()])
-    .build()?;
-  
-  match client.complete(req).await {
-    Ok(response) => Ok(response),
-    Err(e) => {
-      println!("Anthropic API error: {e}");
-      Err(e)
-    }
-  }
+  let messages = vec![Message::user(prompt)];
+  let max_tokens = MaxTokens::default();
+  let request_body = MessagesRequestBody {
+    model,
+    messages,
+    max_tokens,
+    ..Default::default()
+  };
+
+  client
+    .create_a_message(request_body)
+    .await
 }

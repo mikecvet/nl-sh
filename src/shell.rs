@@ -72,7 +72,7 @@ shell_loop (context: &mut Context, model: Box<dyn Model>, executor: &dyn Command
 
         // The following runs in a simple loop, allowing for a single retry of a failed system command, by requesting a
         // command correction from the model given context about the command objective and failure output.
-        for i in 0..2 {
+        for i in 0..3 {
           let confirm = if input.eq(&cmd) {
             // If the input from the user is identical to the command to execute, just execute it without 
             // asking for confirmation from the shell user.
@@ -96,23 +96,23 @@ shell_loop (context: &mut Context, model: Box<dyn Model>, executor: &dyn Command
 
           match confirm {
             Ok(true) => {
-                // Execute the confirmed command string on the system
-                let output = executor.execute(&context.shell, &cmd)?;
+              // Execute the confirmed command string on the system
+              let output = executor.execute(&context.shell, &cmd)?;
 
-                if output.success {
-                  // If successful, emit the stdout captured by the command
-                  print!("\n{}", output.stdout);
+              if output.success {
+                // If successful, emit the stdout captured by the command
+                print!("\n{}", output.stdout);
 
-                  // Update the context state based on the issued command
-                  context.update(&cmd)?;
-                  break;
-                } else {
-                  println!("Executed [{}] and got error: {}", cmd, output.stderr);
-                  if i == 0 {
-                    println!("Retrying command formulation...");
-                    cmd = model.attempt_correction(context, &input.as_str(), &cmd, &output)?;
-                  }
+                // Update the context state based on the issued command
+                context.update(&cmd)?;
+                break;
+              } else {
+                println!("Executed [{}] and got error: {}", cmd, output.stderr);
+                if i < 2 {
+                  println!("Retrying command formulation...");
+                  cmd = model.attempt_correction(context, &input.as_str(), &cmd, &output)?;
                 }
+              }
             },
             Ok(false) => {
               println!("Aborting command");

@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>>
       .long("claude")
       .action(ArgAction::SetTrue)
       .default_value("false")
-      .help("Use the Anthropic Claude API as a backend, reading from the CLAUDE_API_KEY environment variable"))  
+      .help("Use the Anthropic Claude API as a backend (default: Claude 3 Sonnet), reading from the CLAUDE_API_KEY environment variable"))
     .arg(Arg::new("local")
       .long("local")
       .value_name("path")
@@ -43,7 +43,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>>
   let model: Box<dyn Model> = match args.model_type {
     ModelType::GPT4 => Box::new(GPT { version: gpt4_version(), client: open_ai_api_client() }),
     ModelType::GPT35 => Box::new(GPT { version: gpt35_version(), client: open_ai_api_client() }),
-    ModelType::Claude => Box::new(Claude { version: claude_version(), client: anthropic_client() }),
+    ModelType::Claude => Box::new(Claude { version: claude_3_sonnet(), client: anthropic_client() }),
     ModelType::Local(ref path) => Box::new(LocalLLM { local: local_llm(path) }),
   };
 
