@@ -118,6 +118,7 @@ Any commands suggested by the backing LLM and then executed through `nl-sh` are 
 
 ## TODO
 
+ - [ ] Test local models through `ollama` bindings as compared to `llama.cpp-rs`
  - [ ] Respect underlying shell color configurations for `ls` and related outputs
  - [ ] Figure out how to support output-rewriting for commands such as `top`
  - [ ] Build reverse-incremental history search (for example, `cmd-r`)
