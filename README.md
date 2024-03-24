@@ -115,3 +115,10 @@ Another demonstrating automatic command reformulation upon error:
 `nl-sh` acts like a (minimal) shell by wrapping the underlying shell with a prompt which accepts and executes text inputs from the user. Inputs which seem like actual POSIX commands are directly executed; otherwise the input is directed to an LLM to interpret the input and provide a command sequence satisfying the request, customized for the local system powering the shell. This shell collects some environmental data such as kernel and OS version details to try and generate the most accurate command-line sequence for the given POSIX variant.
 
 Any commands suggested by the backing LLM and then executed through `nl-sh` are written to the user's underlying shell command-history file.
+
+## TODO
+
+ - [ ] Respect underlying shell color configurations for `ls` and related outputs
+ - [ ] Figure out how to support output-rewriting for commands such as `top`
+ - [ ] Build reverse-incremental history search (for example, `cmd-r`)
+ - [ ] Support pagination of lengthy outputs (ie piping through `more` or eqiuvalent
