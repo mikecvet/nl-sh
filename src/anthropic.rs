@@ -42,19 +42,7 @@ issue_anthropic_request (client: &AnthropicClient, model: ClaudeModel, prompt: &
     .create_a_message(request_body)
     .await?;
 
-    let s = match response.content {
-      Content::MultipleBlock(response_vector) => {
-        if !response_vector.is_empty() {
-          match response_vector[0].clone() {
-            clust::messages::ContentBlock::Text(TextContentBlock { _type, text }) => text,
-            _ => "".to_string()
-          }
-        } else {
-          "".to_string()
-        }
-      },
-      Content::SingleText(text) => text
-    };
+  let s = response.content.flatten_into_text()?;
 
-    Ok(s)
+  Ok(s.to_string())
 }

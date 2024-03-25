@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 cc = "=1.0.83"
 clap = { version = "4.2.7", features = ["derive"] }
-clust = "0.5.0"
+clust = "0.6.0"
 home = "0.5.9"
 inquire = { git = "https://github.com/mikecvet/inquire.git", branch = "history" }
 llama_cpp_rs = "0.3.0"
